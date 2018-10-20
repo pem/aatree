@@ -116,11 +116,16 @@ aatree_post_delete_fix(aatree_t t)
             if (t->level < t->right->level)
                 t->right->level = t->level;
         }
-        if (t->right != NULL && t->left != NULL)
+        t = aatree_skew(t);
+        if (t->right != NULL)
         {
-            t = aatree_skew(t);
-            t = aatree_split(t);
+            t->right = aatree_skew(t->right);
+            if (t->right != NULL)
+                t->right->right = aatree_skew(t->right->right);
         }
+        t = aatree_split(t);
+        if (t->right != NULL)
+            t->right = aatree_split(t->right);
     }
     return t;
 }
