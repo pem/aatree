@@ -15,14 +15,21 @@
 struct aatree_s
 {
     struct aatree_s *left, *right;
-    uint32_t level;
-    int key;
+    aatree_level_t level;
+    char *key;
+    void *value;
 };
 
-int
+char *
 aatree_key(aatree_t t)
 {
     return t->key;
+}
+
+void *
+aatree_value(aatree_t t)
+{
+    return t->value;
 }
 
 aatree_t
@@ -37,7 +44,7 @@ aatree_right(aatree_t t)
     return t->right;
 }
 
-uint32_t
+aatree_level_t
 aatree_level(aatree_t t)
 {
     return t->level;
@@ -78,7 +85,7 @@ aatree_insert_node(aatree_t t, aatree_t n)
 {
     if (t == NULL)
         return n;
-    if (n->key < t->key)
+    if (strcmp(n->key, t->key) < 0)
         t->left = aatree_insert_node(t->left, n); /* Deep recursion */
     else
         t->right = aatree_insert_node(t->right, n); /* Deep recursion */
@@ -88,14 +95,19 @@ aatree_insert_node(aatree_t t, aatree_t n)
 }
 
 aatree_t
-aatree_insert(aatree_t t, int key)
+aatree_insert(aatree_t t, const char *key, void *value)
 {
     aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
 
     if (n == NULL)
         return NULL;
     memset(n, 0, sizeof(struct aatree_s));
-    n->key = key;
+    if ((n->key = strdup(key)) == NULL)
+    {
+        free(n);
+        return NULL;
+    }
+    n->value = value;
     n->level = 1;
     return aatree_insert_node(t, n);
 }
@@ -133,10 +145,13 @@ aatree_post_delete_fix(aatree_t t)
 static void
 aatree_swap(aatree_t found, aatree_t leaf)
 {
-    int key = found->key;
+    char *key = found->key;
+    void *value = found->value;
 
     found->key = leaf->key;
+    found->value = leaf->value;
     leaf->key = key;
+    leaf->value = value;
 }
 
 static aatree_t
@@ -166,11 +181,13 @@ aatree_delete_find_predecessor(aatree_t t, aatree_t found, aatree_t *deletedp)
 }
 
 static aatree_t
-aatree_delete_recursive(aatree_t t, int key, aatree_t *deletedp)
+aatree_delete_recursive(aatree_t t, const char *key, aatree_t *deletedp)
 {
+
     if (t == NULL)
         return NULL;            /* Not found */
-    if (key == t->key)
+    int cmp = strcmp(key, t->key);
+    if (cmp == 0)
     {                           /* Found it */
         if (t->right != NULL)
             t->right = aatree_delete_find_successor(t->right, t, deletedp);
@@ -184,7 +201,7 @@ aatree_delete_recursive(aatree_t t, int key, aatree_t *deletedp)
     }
     else
     {                           /* Keep looking */
-        if (t->left != NULL && key < t->key)
+        if (t->left != NULL && cmp < 0)
             t->left = aatree_delete_recursive(t->left, key, deletedp);
         else if (t->right != NULL)
             t->right = aatree_delete_recursive(t->right, key, deletedp);
@@ -195,23 +212,38 @@ aatree_delete_recursive(aatree_t t, int key, aatree_t *deletedp)
 }
 
 aatree_t
-aatree_delete(aatree_t t, int key)
+aatree_delete(aatree_t t, const char *key,
+              bool *deletedp, void **valuep)
 {
-    aatree_t deleted = NULL;
+    aatree_t node = NULL;
 
-    t = aatree_delete_recursive(t, key, &deleted);
-    free(deleted);
+    t = aatree_delete_recursive(t, key, &node);
+    if (deletedp != NULL)
+        *deletedp = (node != NULL);
+    if (node != NULL)
+    {
+        free(node->key);
+        if (valuep != NULL)
+            *valuep = node->value;
+        free(node);
+    }
     return t;
 }
 
 bool
-aatree_search(aatree_t t, int key)
+aatree_search(aatree_t t, const char *key, void **valuep)
 {
     while (t != NULL)
     {
-        if (key == t->key)
+        int cmp = strcmp(key, t->key);
+
+        if (cmp == 0)
+        {
+            if (valuep != NULL)
+                *valuep = t->value;
             return true;
-        if (key < t->key)
+        }
+        if (cmp < 0)
             t = t->left;
         else
             t = t->right;
