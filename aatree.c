@@ -112,7 +112,7 @@ aatree_insert_node(aatree_t t, aatree_t n)
 /* Correct the levels and re-balance; refer to the original article or other
    texts about AA Trees for details. */
 static aatree_t
-aatree_post_delete_fix(aatree_t t)
+aatree_post_remove_fix(aatree_t t)
 {
     if (t != NULL)
     {
@@ -142,7 +142,7 @@ aatree_post_delete_fix(aatree_t t)
 }
 
 /* Technically it's only necessary to update the found node, but we swap
-   the values so we can return the deleted key and value to the caller. */
+   the values so we can return the removed key and value to the caller. */
 static void
 aatree_swap(aatree_t found, aatree_t leaf)
 {
@@ -156,35 +156,35 @@ aatree_swap(aatree_t found, aatree_t leaf)
 }
 
 static aatree_t
-aatree_delete_find_successor(aatree_t t, aatree_t found, aatree_t *deletedp)
+aatree_remove_find_successor(aatree_t t, aatree_t found, aatree_t *removedp)
 {
     if (t->left == NULL)
     {                           /* Found successor */
         aatree_swap(found, t);
-        *deletedp = t;
+        *removedp = t;
         return t->right;
     }
-    t->left = aatree_delete_find_successor(t->left, found, deletedp);
-    return aatree_post_delete_fix(t);
+    t->left = aatree_remove_find_successor(t->left, found, removedp);
+    return aatree_post_remove_fix(t);
 }
 
 /* Will an AA Tree ever have such a shape that we have to find the
    predecessor? Don't know, so we'll keep this just in case... */
 static aatree_t
-aatree_delete_find_predecessor(aatree_t t, aatree_t found, aatree_t *deletedp)
+aatree_remove_find_predecessor(aatree_t t, aatree_t found, aatree_t *removedp)
 {
     if (t->right == NULL)
     {                           /* Found predecessor */
         aatree_swap(found, t);
-        *deletedp = t;
+        *removedp = t;
         return t->left;
     }
-    t->right = aatree_delete_find_predecessor(t->right, found, deletedp);
-    return aatree_post_delete_fix(t);
+    t->right = aatree_remove_find_predecessor(t->right, found, removedp);
+    return aatree_post_remove_fix(t);
 }
 
 static aatree_t
-aatree_delete_recursive(aatree_t t, const char *key, aatree_t *deletedp)
+aatree_remove_recursive(aatree_t t, const char *key, aatree_t *removedp)
 {
 
     if (t == NULL)
@@ -193,25 +193,25 @@ aatree_delete_recursive(aatree_t t, const char *key, aatree_t *deletedp)
     if (cmp == 0)
     {                           /* Found it */
         if (t->right != NULL)
-            t->right = aatree_delete_find_successor(t->right, t, deletedp);
+            t->right = aatree_remove_find_successor(t->right, t, removedp);
         else if (t->left != NULL)
-            t->left = aatree_delete_find_predecessor(t->left, t, deletedp);
+            t->left = aatree_remove_find_predecessor(t->left, t, removedp);
         else
         {                       /* Found a leaf */
-            *deletedp = t;
+            *removedp = t;
             return NULL;
         }
     }
     else
     {                           /* Keep looking */
         if (t->left != NULL && cmp < 0)
-            t->left = aatree_delete_recursive(t->left, key, deletedp);
+            t->left = aatree_remove_recursive(t->left, key, removedp);
         else if (t->right != NULL)
-            t->right = aatree_delete_recursive(t->right, key, deletedp);
+            t->right = aatree_remove_recursive(t->right, key, removedp);
         else
             return t;           /* A leaf */
     }
-    return aatree_post_delete_fix(t);
+    return aatree_post_remove_fix(t);
 }
 
 aatree_t
@@ -219,7 +219,7 @@ aatree_remove_node(aatree_t t, const char *key, aatree_t *nodep)
 {
     aatree_t node = NULL;
 
-    t = aatree_delete_recursive(t, key, &node);
+    t = aatree_remove_recursive(t, key, &node);
     if (nodep != NULL)
         *nodep = node;
     return t;

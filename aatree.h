@@ -18,8 +18,10 @@ typedef struct aatree_s *aatree_t;
    height of the tree. */
 typedef uint32_t aatree_level_t;
 
+/* Returns the size of a node, used for allocating space for a new node. */
 size_t aatree_sizeof(void);
 
+/* Initializes a new node. */
 void aatree_init_node(aatree_t n, char *key, void *value);
 
 char *aatree_key(aatree_t t);
@@ -32,20 +34,39 @@ aatree_t aatree_right(aatree_t t);
 
 aatree_level_t aatree_level(aatree_t t);
 
+/* Insert the node into the tree.
+   Returns the new tree root. */
 aatree_t aatree_insert_node(aatree_t t, aatree_t n);
 
-aatree_t aatree_insert(aatree_t t, const char *key, void *value);
-
+/* Remove the node with matching key. *nodep is set to the removed node
+   if it was found, or NULL otherwise.
+   Returns the new tree root. */
 aatree_t aatree_remove_node(aatree_t t, const char *key, aatree_t *nodep);
 
-aatree_t aatree_delete(aatree_t t, const char *key,
-                       bool *deletedp, void **valuep);
-
-/* Find a node matching 'key'. The comparison is done with strcmp() */
+/* Find a node matching 'key'. The comparison is done with strcmp().
+   Returns the found node, or NULL. */
 aatree_t aatree_find_key(aatree_t t, const char *key);
 
+/* Fall f for each node inte the tree. */
 void aatree_each(aatree_t, void (*f)(aatree_t));
 
+
+/*
+** Implicit malloc/free functions
+*/
+
+/* Insert the key-value pair. A new node is allocated with malloc.
+   Returns the new tree root. */
+aatree_t aatree_insert(aatree_t t, const char *key, void *value);
+
+/* Delete the key-value node from the tree. *removedp is set to true
+   if it was found (and removed), or false otherwise. *valuep is set
+   to the value associated to the key. Both removep and valuep can
+   be NULL. The removed node is freed. */
+aatree_t aatree_delete(aatree_t t, const char *key,
+                       bool *removedp, void **valuep);
+
+/* Destroy the tree by freeing all the nodes. */
 void aatree_destroy(aatree_t t);
 
 #endif /* _aatree_h_ */
