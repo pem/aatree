@@ -3,4 +3,5 @@ aatree-test.o
 aatree.o
 aatreem.o
 libaatree.a
+libaatreem.a
 make.deps

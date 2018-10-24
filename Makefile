@@ -18,29 +18,37 @@ LDLIBS=
 PROG=aatree-test
 
 LIB=libaatree.a
+MLIB=libaatreem.a
 
 SRC=aatree-test.c
-LSRC=aatree.c aatreem.c
+LSRC=aatree.c
+MLSRC=aatree.c aatreem.c
 
 OBJ=$(SRC:%.c=%.o)
 LOBJ=$(LSRC:%.c=%.o)
+MLOBJ=$(MLSRC:%.c=%.o)
 
-all:	$(PROG) $(LIB)
+all:	$(PROG) $(LIB) $(MLIB)
 
-$(PROG):	$(OBJ) $(LIB)
+$(PROG):	$(OBJ) $(MLIB)
 
 $(LIB):	$(LOBJ)
 	rm -f $(LIB)
 	$(AR) qc $(LIB) $(LOBJ)
 	ranlib $(LIB)
 
+$(MLIB):	$(MLOBJ)
+	rm -f $(MLIB)
+	$(AR) qc $(MLIB) $(MLOBJ)
+	ranlib $(MLIB)
+
 clean:
-	$(RM) $(OBJ) $(LOBJ) core
+	$(RM) $(OBJ) $(LOBJ) $(MLOBJ) core
 
 cleanall:	clean
-	$(RM) $(PROG) $(LIB) make.deps
+	$(RM) $(PROG) $(LIB) $(MLIB) make.deps
 
 make.deps:
-	gcc -MM $(CFLAGS) $(SRC) > make.deps
+	gcc -MM $(CFLAGS) $(SRC) $(MSRC) > make.deps
 
 include make.deps
