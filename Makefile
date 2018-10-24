@@ -8,7 +8,7 @@ CC=gcc -std=c11
 
 CCOPTS=-Wpedantic -Wextra -Wall
 
-CCDEFS=
+CCDEFS=-D_POSIX_C_SOURCE=200809L
 
 CFLAGS=-g -DDEBUG $(CCOPTS) $(CCDEFS)
 #CFLAGS=-O $(CCOPTS) $(CCDEFS)
@@ -17,23 +17,25 @@ LDLIBS=
 
 PROG=aatree-test
 
-LIB=
+LIB=libaatree.a
 
-SRC=aatree-test.c aatree.c
+SRC=aatree-test.c
+LSRC=aatree.c aatreem.c
 
 OBJ=$(SRC:%.c=%.o)
+LOBJ=$(LSRC:%.c=%.o)
 
-all:	$(PROG)
+all:	$(PROG) $(LIB)
 
-$(PROG):	$(OBJ)
+$(PROG):	$(OBJ) $(LIB)
 
-#$(LIB):	$(COBJ) $(OBJ)
-#	rm -f $(LIB)
-#	$(AR) qc $(LIB) $(COBJ) $(OBJ)
-#	ranlib $(LIB)
+$(LIB):	$(LOBJ)
+	rm -f $(LIB)
+	$(AR) qc $(LIB) $(LOBJ)
+	ranlib $(LIB)
 
 clean:
-	$(RM) $(OBJ) core
+	$(RM) $(OBJ) $(LOBJ) core
 
 cleanall:	clean
 	$(RM) $(PROG) $(LIB) make.deps

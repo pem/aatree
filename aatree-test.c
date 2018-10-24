@@ -131,10 +131,10 @@ main(int argc, char **argv)
     if (find)
     {
         printf("Find: %s\n", findkey);
-        if (aatree_search(root, findkey, NULL))
-            printf("  Found\n");
-        else
+        if (aatree_find_key(root, findkey) == NULL)
             printf("  Not found\n");
+        else
+            printf("  Found\n");
         printf("--------------------\n");
     }
     if (delete)
@@ -144,7 +144,7 @@ main(int argc, char **argv)
         printf("Deleting: %s\n", delkey);
         printf("--------------------\n");
         root = aatree_delete(root, delkey, &deleted, NULL);
-        if (deleted == NULL)
+        if (! deleted)
         {
             printf("Not deleted\n");
             printf("--------------------\n");

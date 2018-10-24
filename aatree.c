@@ -4,7 +4,7 @@
 **
 ** See "Balanced Search Trees Made Simple" by Arne Andersson,
 ** http://user.it.uu.se/~arnea/ps/simp.pdf .
-** http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_andersson.aspx
+**
 */
 
 #include <stdlib.h>
@@ -19,6 +19,21 @@ struct aatree_s
     char *key;
     void *value;
 };
+
+size_t
+aatree_sizeof(void)
+{
+    return sizeof(struct aatree_s);
+}
+
+void
+aatree_init_node(aatree_t n, char *key, void *value)
+{
+    memset(n, 0, sizeof(struct aatree_s));
+    n->key = key;
+    n->value = value;
+    n->level = 1;
+}
 
 char *
 aatree_key(aatree_t t)
@@ -80,7 +95,7 @@ aatree_split(aatree_t t)
     return t;
 }
 
-static aatree_t
+aatree_t
 aatree_insert_node(aatree_t t, aatree_t n)
 {
     if (t == NULL)
@@ -94,24 +109,8 @@ aatree_insert_node(aatree_t t, aatree_t n)
     return t;
 }
 
-aatree_t
-aatree_insert(aatree_t t, const char *key, void *value)
-{
-    aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
-
-    if (n == NULL)
-        return NULL;
-    memset(n, 0, sizeof(struct aatree_s));
-    if ((n->key = strdup(key)) == NULL)
-    {
-        free(n);
-        return NULL;
-    }
-    n->value = value;
-    n->level = 1;
-    return aatree_insert_node(t, n);
-}
-
+/* Correct the levels and re-balance; refer to the original article or other
+   texts about AA Trees for details. */
 static aatree_t
 aatree_post_delete_fix(aatree_t t)
 {
@@ -142,6 +141,8 @@ aatree_post_delete_fix(aatree_t t)
     return t;
 }
 
+/* Technically it's only necessary to update the found node, but we swap
+   the values so we can return the deleted key and value to the caller. */
 static void
 aatree_swap(aatree_t found, aatree_t leaf)
 {
@@ -167,11 +168,13 @@ aatree_delete_find_successor(aatree_t t, aatree_t found, aatree_t *deletedp)
     return aatree_post_delete_fix(t);
 }
 
+/* Will an AA Tree ever have such a shape that we have to find the
+   predecessor? Don't know, so we'll keep this just in case... */
 static aatree_t
 aatree_delete_find_predecessor(aatree_t t, aatree_t found, aatree_t *deletedp)
 {
     if (t->right == NULL)
-    {                           /* Found successor */
+    {                           /* Found predecessor */
         aatree_swap(found, t);
         *deletedp = t;
         return t->left;
@@ -212,43 +215,31 @@ aatree_delete_recursive(aatree_t t, const char *key, aatree_t *deletedp)
 }
 
 aatree_t
-aatree_delete(aatree_t t, const char *key,
-              bool *deletedp, void **valuep)
+aatree_remove_node(aatree_t t, const char *key, aatree_t *nodep)
 {
     aatree_t node = NULL;
 
     t = aatree_delete_recursive(t, key, &node);
-    if (deletedp != NULL)
-        *deletedp = (node != NULL);
-    if (node != NULL)
-    {
-        free(node->key);
-        if (valuep != NULL)
-            *valuep = node->value;
-        free(node);
-    }
+    if (nodep != NULL)
+        *nodep = node;
     return t;
 }
 
-bool
-aatree_search(aatree_t t, const char *key, void **valuep)
+aatree_t
+aatree_find_key(aatree_t t, const char *key)
 {
     while (t != NULL)
     {
         int cmp = strcmp(key, t->key);
 
         if (cmp == 0)
-        {
-            if (valuep != NULL)
-                *valuep = t->value;
-            return true;
-        }
+            break;
         if (cmp < 0)
             t = t->left;
         else
             t = t->right;
     }
-    return false;
+    return t;
 }
 
 void
@@ -259,19 +250,5 @@ aatree_each(aatree_t t, void (*f)(aatree_t))
         aatree_each(t->left, f); /* Deep recursion */
         f(t);
         t = t->right;
-    }
-}
-
-void
-aatree_destroy(aatree_t t)
-{
-    while (t != NULL)
-    {
-        aatree_t left = t->left;
-        aatree_t right = t->right;
-
-        free(t);
-        aatree_destroy(left);   /* Deep recursion */
-        t = right;
     }
 }
