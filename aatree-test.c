@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "aatree.h"
@@ -15,10 +16,16 @@ ptree(aatree_t n, int indent)
 {
     if (n != NULL)
     {
+        char *val = aatree_value(n);
+
         ptree(aatree_right(n), indent+1);
         for (int i = indent ; i > 0 ; i--)
             printf("  ");
-        printf("%u:%s\n", (unsigned)aatree_level(n), aatree_key(n));
+        if (val == NULL)
+            printf("(%u)%s\n", (unsigned)aatree_level(n), aatree_key(n));
+        else
+            printf("(%u)%s:%s\n",
+                   (unsigned)aatree_level(n), aatree_key(n), val);
         ptree(aatree_left(n), indent+1);
     }
 }
@@ -26,7 +33,12 @@ ptree(aatree_t n, int indent)
 static void
 pnode(aatree_t n)
 {
-    printf(" %s", aatree_key(n));
+    char *val = aatree_value(n);
+
+    if (val == NULL)
+        printf(" %s", aatree_key(n));
+    else
+        printf(" %s:%s", aatree_key(n), val);
 }
 
 /* Check invariants for AA Trees */
@@ -111,7 +123,12 @@ main(int argc, char **argv)
         }
     for (int i = optind ; i < argc ; i++)
     {
-        root = aatree_insert(root, argv[i], NULL);
+        char *key = strdup(argv[i]);
+        char *val = strchr(key, ':');
+
+        if (val != NULL)
+            *val++ = '\0';
+        root = aatree_insert(root, key, val);
         if (verbose)
         {
             ptree(root, 0);
@@ -130,11 +147,17 @@ main(int argc, char **argv)
 
     if (find)
     {
+        aatree_t n;
+
         printf("Find: %s\n", findkey);
-        if (aatree_find_key(root, findkey) == NULL)
+        if ((n = aatree_find_key(root, findkey)) == NULL)
             printf("  Not found\n");
         else
-            printf("  Found\n");
+        {
+            char *val = aatree_value(n);
+
+            printf("  Found %s\n", (val == NULL ? "(null)" : val));
+        }
         printf("--------------------\n");
     }
     if (delete)
