@@ -252,3 +252,27 @@ aatree_each(aatree_t t, void (*f)(aatree_t))
         t = t->right;
     }
 }
+
+void
+aatree_iter_init(aatree_t t, aatree_iter_t *iter)
+{
+    memset(iter, 0, sizeof(aatree_iter_t));
+    while (t != NULL)
+    {
+        iter->node[iter->i++] = t;
+        t = t->left;
+    }
+}
+
+aatree_t
+aatree_iter_next(aatree_iter_t *iter)
+{
+    if (iter->i == 0)
+        return NULL;
+
+    aatree_t t = iter->node[--iter->i];
+
+    for (aatree_t tr = t->right ; tr != NULL ; tr = tr->left)
+        iter->node[iter->i++] = tr;
+    return t;
+}

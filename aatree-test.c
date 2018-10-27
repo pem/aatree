@@ -141,8 +141,17 @@ main(int argc, char **argv)
         ptree(root, 0);
         printf("--------------------\n");
     }
-    printf("Order:");
+    printf("Each:");
     aatree_each(root, pnode);
+    printf("\n--------------------\n");
+    printf("Iter:");
+    {
+        aatree_iter_t iter;
+        aatree_t n;
+        aatree_iter_init(root, &iter);
+        while ((n = aatree_iter_next(&iter)) != NULL)
+            pnode(n);
+    }
     printf("\n--------------------\n");
 
     if (find)

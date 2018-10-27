@@ -17,6 +17,12 @@ typedef struct aatree_s *aatree_t;
    In theory, the number of bits needed is log2(h) where h is the
    height of the tree. */
 typedef uint32_t aatree_level_t;
+#define AATREE_MAX_DEPTH 32
+typedef struct aatree_iter_s
+{
+    uint32_t i;
+    aatree_t node[AATREE_MAX_DEPTH];
+} aatree_iter_t;
 
 /* Returns the size of a node, used for allocating space for a new node. */
 size_t aatree_sizeof(void);
@@ -49,6 +55,12 @@ aatree_t aatree_find_key(aatree_t t, const char *key);
 
 /* Fall f for each node inte the tree. */
 void aatree_each(aatree_t, void (*f)(aatree_t));
+
+/* Initialize an iterator for t. */
+void aatree_iter_init(aatree_t t, aatree_iter_t *iter);
+/* Get the next node from the iterator.
+   Returns NULL when there is no more. */
+aatree_t aatree_iter_next(aatree_iter_t *iter);
 
 
 /*
