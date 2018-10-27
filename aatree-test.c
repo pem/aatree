@@ -30,7 +30,7 @@ ptree(aatree_t n, int indent)
     }
 }
     
-static void
+static bool
 pnode(aatree_t n)
 {
     char *val = aatree_value(n);
@@ -39,10 +39,11 @@ pnode(aatree_t n)
         printf(" %s", aatree_key(n));
     else
         printf(" %s:%s", aatree_key(n), val);
+    return true;
 }
 
 /* Check invariants for AA Trees */
-static void
+static bool
 cnode(aatree_t n)
 {
     char *key = aatree_key(n);
@@ -92,6 +93,7 @@ cnode(aatree_t n)
     if (level > 1 && (left == NULL || right == NULL))
         printf("5: Node %s with level %u has one or none children\n",
                key, (unsigned)level);
+    return true;
 }
 
 int
@@ -134,7 +136,7 @@ main(int argc, char **argv)
             ptree(root, 0);
             printf("--------------------\n");
         }
-        aatree_each(root, cnode);
+        (void)aatree_each(root, cnode);
     }
     if (! verbose)
     {
@@ -142,7 +144,7 @@ main(int argc, char **argv)
         printf("--------------------\n");
     }
     printf("Each:");
-    aatree_each(root, pnode);
+    (void)aatree_each(root, pnode);
     printf("\n--------------------\n");
     printf("Iter:");
     {
@@ -152,7 +154,7 @@ main(int argc, char **argv)
             fprintf(stderr, "Tree is too deep for iterator\n");
         else
             while ((n = aatree_iter_next(&iter)) != NULL)
-                pnode(n);
+                (void)pnode(n);
     }
     printf("\n--------------------\n");
 
@@ -199,11 +201,11 @@ main(int argc, char **argv)
         }
         else
         {
-            aatree_each(root, cnode);
+            (void)aatree_each(root, cnode);
             ptree(root, 0);
             printf("--------------------\n");
             printf("Order:");
-            aatree_each(root, pnode);
+            (void)aatree_each(root, pnode);
             printf("\n--------------------\n");
         }
     }

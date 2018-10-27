@@ -54,8 +54,10 @@ aatree_t aatree_remove_node(aatree_t t, const char *key, aatree_t *nodep);
    Returns the found node, or NULL. */
 aatree_t aatree_find_key(aatree_t t, const char *key);
 
-/* Fall f for each node inte the tree. */
-void aatree_each(aatree_t, void (*f)(aatree_t));
+/* Call f for each node inte the tree.
+   If f returns false for any node, it will abort the iteration
+   and aatree_each() returns false, otherwise true is returned. */
+bool aatree_each(aatree_t, bool (*f)(aatree_t));
 
 /* Initialize an iterator for t.
    Returns false if tree is too deep, true otherwise. */

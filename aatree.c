@@ -241,15 +241,18 @@ aatree_find_key(aatree_t t, const char *key)
     return t;
 }
 
-void
-aatree_each(aatree_t t, void (*f)(aatree_t))
+bool
+aatree_each(aatree_t t, bool (*f)(aatree_t))
 {
     while (t != NULL)
     {
-        aatree_each(t->left, f);
-        f(t);
+        if (! aatree_each(t->left, f))
+            return false;
+        if (! f(t))
+            return false;
         t = t->right;
     }
+    return true;
 }
 
 bool
