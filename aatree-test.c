@@ -143,6 +143,19 @@ main(int argc, char **argv)
         ptree(root, 0);
         printf("--------------------\n");
     }
+    for (int i = optind ; i < argc ; i++)
+    {
+        aatree_t n;
+        char *key = strdup(argv[i]);
+        
+        char *val = strchr(key, ':');
+
+        if (val != NULL)
+            *val++ = '\0';
+        n = aatree_find_key(root, key);
+        if (n == NULL)
+            printf("Didn't find %s\n", argv[i]);
+    }
     printf("Each:");
     (void)aatree_each(root, pnode);
     printf("\n--------------------\n");
@@ -178,12 +191,14 @@ main(int argc, char **argv)
             printf("  Iter not found\n");
         else
         {
+            printf("  Found");
             while ((n = aatree_iter_key_next(&iter)) != NULL)
             {
                 char *val = aatree_value(n);
 
-                printf("  Found %s\n", (val == NULL ? "(null)" : val));
+                printf(" %s", (val == NULL ? "(null)" : val));
             }
+            printf("\n");
         }
         printf("--------------------\n");
     }
