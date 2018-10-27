@@ -207,22 +207,17 @@ main(int argc, char **argv)
         bool deleted = false;
 
         printf("Deleting: %s\n", delkey);
-        printf("--------------------\n");
         root = aatree_delete(root, delkey, &deleted, NULL);
         if (! deleted)
-        {
-            printf("Not deleted\n");
-            printf("--------------------\n");
-        }
+            printf("  Not deleted\n");
         else
-        {
-            (void)aatree_each(root, cnode);
-            ptree(root, 0);
-            printf("--------------------\n");
-            printf("Order:");
-            (void)aatree_each(root, pnode);
-            printf("\n--------------------\n");
-        }
+            printf("  Deleted\n");
+        (void)aatree_each(root, cnode);
+        ptree(root, 0);
+        printf("--------------------\n");
+        printf("Order:");
+        (void)aatree_each(root, pnode);
+        printf("\n--------------------\n");
     }
 
     aatree_destroy(root);
