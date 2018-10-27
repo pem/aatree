@@ -1,6 +1,6 @@
 /* $Id: $
 **
-** Per-Erik Martin (pem@foxt.com) 2018-10-22
+** Per-Erik Martin (pem@pem.nu) 2018-10-22
 **
 ** Additional functions that implicitly use malloc/free for keys and nodes.
 **
@@ -57,7 +57,7 @@ aatree_destroy(aatree_t t)
 
         free(aatree_key(t));
         free(t);
-        aatree_destroy(left);   /* Deep recursion */
+        aatree_destroy(left);   /* Recursion */
         t = right;
     }
 }

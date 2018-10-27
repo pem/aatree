@@ -101,9 +101,9 @@ aatree_insert_node(aatree_t t, aatree_t n)
     if (t == NULL)
         return n;
     if (strcmp(n->key, t->key) < 0)
-        t->left = aatree_insert_node(t->left, n); /* Deep recursion */
+        t->left = aatree_insert_node(t->left, n);
     else
-        t->right = aatree_insert_node(t->right, n); /* Deep recursion */
+        t->right = aatree_insert_node(t->right, n);
     t = aatree_skew(t);
     t = aatree_split(t);
     return t;
@@ -186,15 +186,14 @@ aatree_remove_find_predecessor(aatree_t t, aatree_t found, aatree_t *removedp)
 static aatree_t
 aatree_remove_recursive(aatree_t t, const char *key, aatree_t *removedp)
 {
-
     if (t == NULL)
         return NULL;            /* Not found */
     int cmp = strcmp(key, t->key);
     if (cmp == 0)
     {                           /* Found it */
-        if (t->right != NULL)
+        if (t->right != NULL)   /* Pick right branch, if any */
             t->right = aatree_remove_find_successor(t->right, t, removedp);
-        else if (t->left != NULL)
+        else if (t->left != NULL) /* Will this ever happen? */
             t->left = aatree_remove_find_predecessor(t->left, t, removedp);
         else
         {                       /* Found a leaf */
@@ -247,21 +246,24 @@ aatree_each(aatree_t t, void (*f)(aatree_t))
 {
     while (t != NULL)
     {
-        aatree_each(t->left, f); /* Deep recursion */
+        aatree_each(t->left, f);
         f(t);
         t = t->right;
     }
 }
 
-void
+bool
 aatree_iter_init(aatree_t t, aatree_iter_t *iter)
 {
     memset(iter, 0, sizeof(aatree_iter_t));
     while (t != NULL)
     {
+        if (iter->i >= AATREE_MAX_DEPTH)
+            return false;
         iter->node[iter->i++] = t;
         t = t->left;
     }
+    return true;
 }
 
 aatree_t
@@ -269,10 +271,12 @@ aatree_iter_next(aatree_iter_t *iter)
 {
     if (iter->i == 0)
         return NULL;
-
     aatree_t t = iter->node[--iter->i];
-
     for (aatree_t tr = t->right ; tr != NULL ; tr = tr->left)
+    {
+        if (iter->i >= AATREE_MAX_DEPTH)
+            return NULL;
         iter->node[iter->i++] = tr;
+    }
     return t;
 }

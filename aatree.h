@@ -56,8 +56,9 @@ aatree_t aatree_find_key(aatree_t t, const char *key);
 /* Fall f for each node inte the tree. */
 void aatree_each(aatree_t, void (*f)(aatree_t));
 
-/* Initialize an iterator for t. */
-void aatree_iter_init(aatree_t t, aatree_iter_t *iter);
+/* Initialize an iterator for t.
+   Returns false if tree is too deep, true otherwise. */
+bool aatree_iter_init(aatree_t t, aatree_iter_t *iter);
 /* Get the next node from the iterator.
    Returns NULL when there is no more. */
 aatree_t aatree_iter_next(aatree_iter_t *iter);
