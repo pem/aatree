@@ -280,3 +280,40 @@ aatree_iter_next(aatree_iter_t *iter)
     }
     return t;
 }
+
+bool
+aatree_iter_key_init(aatree_t t, const char *key, aatree_iter_t *iter)
+{
+    memset(iter, 0, sizeof(aatree_iter_t));
+    iter->key = key;
+    t = aatree_find_key(t, key);
+    if (t == NULL)
+        return false;
+    while (t != NULL)
+    {
+        if (strcmp(key, t->key) != 0)
+            break;
+        if (iter->i >= AATREE_MAX_DEPTH)
+            return false;
+        iter->node[iter->i++] = t;
+        t = t->left;
+    }
+    return true;
+}
+
+aatree_t
+aatree_iter_key_next(aatree_iter_t *iter)
+{
+    if (iter->i == 0)
+        return NULL;
+    aatree_t t = iter->node[--iter->i];
+    for (aatree_t tr = t->right ; tr != NULL ; tr = tr->left)
+    {
+        if (strcmp(iter->key, tr->key) != 0)
+            break;
+        if (iter->i >= AATREE_MAX_DEPTH)
+            return NULL;
+        iter->node[iter->i++] = tr;
+    }
+    return t;
+}

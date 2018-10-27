@@ -20,6 +20,7 @@ typedef uint32_t aatree_level_t;
 #define AATREE_MAX_DEPTH 32
 typedef struct aatree_iter_s
 {
+    const char *key;
     uint32_t i;
     aatree_t node[AATREE_MAX_DEPTH];
 } aatree_iter_t;
@@ -60,8 +61,15 @@ void aatree_each(aatree_t, void (*f)(aatree_t));
    Returns false if tree is too deep, true otherwise. */
 bool aatree_iter_init(aatree_t t, aatree_iter_t *iter);
 /* Get the next node from the iterator.
-   Returns NULL when there is no more. */
+   Returns NULL when there is no more, or the tree is too deep. */
 aatree_t aatree_iter_next(aatree_iter_t *iter);
+
+/* Initialize an iterator for matching keys in t.
+   Returns false if not found, or the tree is too deep, true otherwise. */
+bool aatree_iter_key_init(aatree_t t, const char *key, aatree_iter_t *iter);
+/* Get the next matching node from the iterator.
+   Returns NULL when there is no more, or the tree is too deep. */
+aatree_t aatree_iter_key_next(aatree_iter_t *iter);
 
 
 /*

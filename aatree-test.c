@@ -148,15 +148,18 @@ main(int argc, char **argv)
     {
         aatree_iter_t iter;
         aatree_t n;
-        aatree_iter_init(root, &iter);
-        while ((n = aatree_iter_next(&iter)) != NULL)
-            pnode(n);
+        if (! aatree_iter_init(root, &iter))
+            fprintf(stderr, "Tree is too deep for iterator\n");
+        else
+            while ((n = aatree_iter_next(&iter)) != NULL)
+                pnode(n);
     }
     printf("\n--------------------\n");
 
     if (find)
     {
         aatree_t n;
+        aatree_iter_t iter;
 
         printf("Find: %s\n", findkey);
         if ((n = aatree_find_key(root, findkey)) == NULL)
@@ -166,6 +169,19 @@ main(int argc, char **argv)
             char *val = aatree_value(n);
 
             printf("  Found %s\n", (val == NULL ? "(null)" : val));
+        }
+        printf("--------------------\n");
+        printf("Iter find: %s\n", findkey);
+        if (! aatree_iter_key_init(root, findkey, &iter))
+            printf("  Iter not found\n");
+        else
+        {
+            while ((n = aatree_iter_key_next(&iter)) != NULL)
+            {
+                char *val = aatree_value(n);
+
+                printf("  Found %s\n", (val == NULL ? "(null)" : val));
+            }
         }
         printf("--------------------\n");
     }
