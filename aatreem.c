@@ -12,7 +12,7 @@
 #include "aatree.h"
 
 aatree_t
-aatree_insert(aatree_t t, const char *key, void *value)
+aatreem_insert(aatree_t t, const char *key, void *value)
 {
     aatree_t n = (aatree_t)malloc(aatree_sizeof());
     char *keycopy;
@@ -29,8 +29,8 @@ aatree_insert(aatree_t t, const char *key, void *value)
 }
 
 aatree_t
-aatree_delete(aatree_t t, const char *key,
-              bool *deletedp, void **valuep)
+aatreem_delete(aatree_t t, const char *key,
+               bool *deletedp, void **valuep)
 {
     aatree_t node = NULL;
 
@@ -48,7 +48,7 @@ aatree_delete(aatree_t t, const char *key,
 }
 
 void
-aatree_destroy(aatree_t t)
+aatreem_destroy(aatree_t t, void (*freefun)(void *))
 {
     while (t != NULL)
     {
@@ -56,8 +56,10 @@ aatree_destroy(aatree_t t)
         aatree_t right = aatree_right(t);
 
         free(aatree_key(t));
+        if (freefun != NULL)
+            freefun(aatree_value(t));
         free(t);
-        aatree_destroy(left);   /* Recursion */
+        aatreem_destroy(left, freefun);
         t = right;
     }
 }

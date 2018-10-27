@@ -129,8 +129,11 @@ main(int argc, char **argv)
         char *val = strchr(key, ':');
 
         if (val != NULL)
+        {
             *val++ = '\0';
-        root = aatree_insert(root, key, val);
+            val = strdup(val);
+        }
+        root = aatreem_insert(root, key, val);
         if (verbose)
         {
             ptree(root, 0);
@@ -207,7 +210,7 @@ main(int argc, char **argv)
         bool deleted = false;
 
         printf("Deleting: %s\n", delkey);
-        root = aatree_delete(root, delkey, &deleted, NULL);
+        root = aatreem_delete(root, delkey, &deleted, NULL);
         if (! deleted)
             printf("  Not deleted\n");
         else
@@ -220,7 +223,7 @@ main(int argc, char **argv)
         printf("\n--------------------\n");
     }
 
-    aatree_destroy(root);
+    aatreem_destroy(root, free);
 
     exit(0);
 }

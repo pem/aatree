@@ -45,12 +45,14 @@ aatree_level_t aatree_level(aatree_t t);
    Returns the new tree root. */
 aatree_t aatree_insert_node(aatree_t t, aatree_t n);
 
-/* Remove the node with matching key. *nodep is set to the removed node
-   if it was found, or NULL otherwise.
+/* Remove a node with matching key. *nodep is set to the removed node
+   if it was found, or NULL otherwise. It will remove the first matching
+   node it encounters in the tree.
    Returns the new tree root. */
 aatree_t aatree_remove_node(aatree_t t, const char *key, aatree_t *nodep);
 
 /* Find a node matching 'key'. The comparison is done with strcmp().
+   It will return the first matching node it encounters in the tree.
    Returns the found node, or NULL. */
 aatree_t aatree_find_key(aatree_t t, const char *key);
 
@@ -80,16 +82,18 @@ aatree_t aatree_iter_key_next(aatree_iter_t *iter);
 
 /* Insert the key-value pair. A new node is allocated with malloc.
    Returns the new tree root. */
-aatree_t aatree_insert(aatree_t t, const char *key, void *value);
+aatree_t aatreem_insert(aatree_t t, const char *key, void *value);
 
 /* Delete the key-value node from the tree. *removedp is set to true
    if it was found (and removed), or false otherwise. *valuep is set
    to the value associated to the key. Both removep and valuep can
-   be NULL. The removed node is freed. */
-aatree_t aatree_delete(aatree_t t, const char *key,
-                       bool *removedp, void **valuep);
+   be NULL. The removed node is freed.
+   Returns the new tree root. */
+aatree_t aatreem_delete(aatree_t t, const char *key,
+                        bool *removedp, void **valuep);
 
-/* Destroy the tree by freeing all the nodes. */
-void aatree_destroy(aatree_t t);
+/* Destroy the tree by freeing all the nodes. If 'freefun' not NULL,
+   it is called on each value pointer. */
+void aatreem_destroy(aatree_t t, void (*freefun)(void *));
 
 #endif /* _aatree_h_ */
