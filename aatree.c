@@ -11,14 +11,7 @@
 #include <string.h>
 
 #include "aatree.h"
-
-struct aatree_s
-{
-    struct aatree_s *left, *right;
-    aatree_level_t level;
-    char *key;
-    void *value;
-};
+#include "aatree-internal.h"
 
 size_t
 aatree_sizeof(void)

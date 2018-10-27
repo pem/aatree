@@ -10,11 +10,12 @@
 #include <string.h>
 
 #include "aatree.h"
+#include "aatree-internal.h"
 
 aatree_t
 aatreem_insert(aatree_t t, const char *key, void *value)
 {
-    aatree_t n = (aatree_t)malloc(aatree_sizeof());
+    aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
     char *keycopy;
 
     if (n == NULL)
@@ -39,9 +40,9 @@ aatreem_delete(aatree_t t, const char *key,
         *deletedp = (node != NULL);
     if (node != NULL)
     {
-        free(aatree_key(node));
+        free(node->key);
         if (valuep != NULL)
-            *valuep = aatree_value(node);
+            *valuep = node->value;
         free(node);
     }
     return t;
@@ -52,12 +53,12 @@ aatreem_destroy(aatree_t t, void (*freefun)(void *))
 {
     while (t != NULL)
     {
-        aatree_t left = aatree_left(t);
-        aatree_t right = aatree_right(t);
+        aatree_t left = t->left;
+        aatree_t right = t->right;
 
-        free(aatree_key(t));
+        free(t->key);
         if (freefun != NULL)
-            freefun(aatree_value(t));
+            freefun(t->value);
         free(t);
         aatreem_destroy(left, freefun);
         t = right;
