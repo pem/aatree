@@ -44,6 +44,18 @@ tst "Find no dup. keys" aafinddupkey0.txt -f z f:9 a:1 e:6 c:4 c:3 b:2 c:5 d:7 e
 tst "Find a dup. key 1" aafinddupkey1.txt -f c f:9 a:1 e:6 c:4 c:3 b:2 c:5 d:7 e:8
 tst "Find a dup. key 2" aafinddupkey2.txt -f e f:9 a:1 e:6 c:4 c:3 b:2 c:5 d:7 e:8
 
+tst "Insert unique in empty" aainsunique0.txt -u 1
+tst "Insert unique in one ok" aainsunique1yes.txt -u 1 2
+tst "Insert unique in one fail" aainsunique1no.txt -u 1 1
+tst "Insert unique in 7 ok" aainsunique7yes.txt -u 1 2 3 4 5 6 7 8
+tst "Insert unique in 7 fail" aainsunique7no.txt -u 1 2 3 4 5 6 7 6
+
+tst "No Overwrite in empty" aaoverwrite0.txt -o a:1
+tst "No Overwrite in one" aaoverwrite1no.txt -o a:1 b:2
+tst "Overwrite in one" aaoverwrite1yes.txt -o a:1 a:2
+tst "No Overwrite in 7" aaoverwrite7no.txt -o a:1 b:2 c:3 d:4 e:5 f:6 g:7 h:8
+tst "Overwrite in 7" aaoverwrite7yes.txt -o a:1 b:2 c:3 d:4 e:5 f:6 g:7 f:8
+
 echo
 if [ $xit -ne 0 ]; then
     echo "One or more tests failed"

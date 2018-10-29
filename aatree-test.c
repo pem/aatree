@@ -101,11 +101,11 @@ main(int argc, char **argv)
 {
     int c;
     char *delkey, *findkey;
-    bool verbose = false, delete = false, find = false;
+    bool verbose = false, delete = false, find = false, unique = false, ovrwrt = false;
     aatree_t root = NULL;
 
     opterr = 0;
-    while ((c = getopt(argc, argv, "d:f:v")) != EOF)
+    while ((c = getopt(argc, argv, "d:f:ouv")) != EOF)
         switch (c)
         {
         case 'd':
@@ -116,13 +116,24 @@ main(int argc, char **argv)
             find = true;
             findkey = optarg;
             break;
+        case 'o':
+            ovrwrt = true;
+            break;
+        case 'u':
+            unique = true;
+            break;
         case 'v':
             verbose = true;
             break;
         default:
-            fprintf(stderr, "aatree-test [-d <key>] [-f <key] keys...\n");
+            fprintf(stderr, "aatree-test [-o|-u] [-v] [-d <key>] [-f <key] keys...\n");
             exit(1);
         }
+    if (ovrwrt && unique)
+    {
+        fprintf(stderr, "aatree-test [-o|-u] [-v] [-d <key>] [-f <key] keys...\n");
+        exit(1);
+    }
     for (int i = optind ; i < argc ; i++)
     {
         char *key = strdup(argv[i]);
@@ -133,7 +144,33 @@ main(int argc, char **argv)
             *val++ = '\0';
             val = strdup(val);
         }
-        root = aatreem_insert(root, key, val);
+        if (!ovrwrt && !unique)
+            root = aatreem_insert(root, key, val);
+        else if (ovrwrt)
+        {
+            bool owrt = false;
+            void *oldval = NULL;
+
+            root = aatreem_overwrite(root, key, val, &owrt, &oldval);
+            if (owrt)
+            {
+                printf("Overwrote %s, old value is %s\n",
+                       key, (oldval != NULL ? (char *)oldval : "(null)"));
+                free(oldval);
+            }
+        }
+        else
+        {
+            bool u = true;
+
+            root = aatreem_insert_unique(root, key, val, &u);
+            if (! u)
+            {
+                printf("Key is not unique: %s\n", key);
+                free(val);
+            }
+        }
+        free(key);
         if (verbose)
         {
             ptree(root, 0);
@@ -149,8 +186,7 @@ main(int argc, char **argv)
     for (int i = optind ; i < argc ; i++)
     {
         aatree_t n;
-        char *key = strdup(argv[i]);
-        
+        char *key = strdup(argv[i]); /* Because we might write in it */
         char *val = strchr(key, ':');
 
         if (val != NULL)
@@ -158,6 +194,7 @@ main(int argc, char **argv)
         n = aatree_find_key(root, key);
         if (n == NULL)
             printf("Didn't find %s\n", argv[i]);
+        free(key);
     }
     printf("Each:");
     (void)aatree_each(root, pnode);

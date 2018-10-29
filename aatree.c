@@ -102,6 +102,53 @@ aatree_insert_node(aatree_t t, aatree_t n)
     return t;
 }
 
+aatree_t
+aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep)
+{
+    int x;
+
+    if (t == NULL)
+        return n;
+    x = strcmp(n->key, t->key);
+    if (x == 0)
+    {
+        *uniquep = false;
+        return t;
+    }
+    if (x < 0)
+        t->left = aatree_insert_unique_node(t->left, n, uniquep);
+    else
+        t->right = aatree_insert_unique_node(t->right, n, uniquep);
+    t = aatree_skew(t);
+    t = aatree_split(t);
+    return t;
+}
+
+aatree_t
+aatree_overwrite_node(aatree_t t, aatree_t n, bool *ovwrtp, void **valuep)
+{
+    int x;
+
+    if (t == NULL)
+        return n;
+    x = strcmp(n->key, t->key);
+    if (x == 0)
+    {
+        *ovwrtp = true;
+        if (valuep)
+            *valuep = t->value;
+        t->value = n->value;
+        return t;
+    }
+    if (x < 0)
+        t->left = aatree_overwrite_node(t->left, n, ovwrtp, valuep);
+    else
+        t->right = aatree_overwrite_node(t->right, n, ovwrtp, valuep);
+    t = aatree_skew(t);
+    t = aatree_split(t);
+    return t;
+}
+
 /* Correct the levels and re-balance; refer to the original article or other
    texts about AA Trees for details. */
 static aatree_t
