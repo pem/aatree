@@ -125,7 +125,7 @@ aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep)
 }
 
 aatree_t
-aatree_overwrite_node(aatree_t t, aatree_t n, bool *ovwrtp, void **valuep)
+aatree_replace_node(aatree_t t, aatree_t n, bool *replacedp, void **valuep)
 {
     int x;
 
@@ -134,16 +134,16 @@ aatree_overwrite_node(aatree_t t, aatree_t n, bool *ovwrtp, void **valuep)
     x = strcmp(n->key, t->key);
     if (x == 0)
     {
-        *ovwrtp = true;
+        *replacedp = true;
         if (valuep)
             *valuep = t->value;
         t->value = n->value;
         return t;
     }
     if (x < 0)
-        t->left = aatree_overwrite_node(t->left, n, ovwrtp, valuep);
+        t->left = aatree_replace_node(t->left, n, replacedp, valuep);
     else
-        t->right = aatree_overwrite_node(t->right, n, ovwrtp, valuep);
+        t->right = aatree_replace_node(t->right, n, replacedp, valuep);
     t = aatree_skew(t);
     t = aatree_split(t);
     return t;

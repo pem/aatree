@@ -52,12 +52,13 @@ aatree_t aatree_insert_node(aatree_t t, aatree_t n);
 aatree_t aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep);
 
 /* Insert the node into the tree. If a node with the same key already
-   exists, the value of that node is overwritten and *valuep is set to
-   the old value and *ovwrtp to true, otherwise it's inserted the normal way.
-   Note that when overwritten, the node 'n' will is unused, only its value
-   is copied. *ovwrtp must be set to false before the call.
+   exists, the value of that node is replaced and *valuep is set to
+   the old value and *replacedp to true, otherwise it's inserted the normal way.
+   Note that when replaced, the node 'n' will is unused, only its value
+   is copied. *replacedp must be set to false before the call.
    Returns the new tree root. */
-aatree_t aatree_overwrite_node(aatree_t t, aatree_t n, bool *ovwrtp, void **valuep);
+aatree_t aatree_replace_node(aatree_t t, aatree_t n,
+                             bool *replacedp, void **valuep);
 
 /* Remove a node with matching key. *nodep is set to the removed node
    if it was found, or NULL otherwise. It will remove the first matching
@@ -106,12 +107,12 @@ aatree_t aatreem_insert_unique(aatree_t t, const char *key, void *value,
                                bool *uniquep);
 
 /* Insert the key-value pair. If a node with the same key already
-   exists, the value of that node is overwritten and *valuep is set to
-   the old value, otherwise it's inserted the normal way. *ovwrtp must
+   exists, the value of that node is replaced and *valuep is set to
+   the old value, otherwise it's inserted the normal way. *replacedp must
    be set to false before the call.
    Returns the new tree root. */
-aatree_t aatreem_overwrite(aatree_t t, const char *key, void *value,
-                           bool *ovwrtp, void **valuep);
+aatree_t aatreem_replace(aatree_t t, const char *key, void *value,
+                         bool *replacedp, void **valuep);
 
 /* Delete the key-value node from the tree. *removedp is set to true
    if it was found (and removed), or false otherwise. *valuep is set

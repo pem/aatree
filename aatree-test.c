@@ -101,11 +101,12 @@ main(int argc, char **argv)
 {
     int c;
     char *delkey, *findkey;
-    bool verbose = false, delete = false, find = false, unique = false, ovrwrt = false;
+    bool verbose = false, delete = false, find = false, unique = false,
+        replace = false;
     aatree_t root = NULL;
 
     opterr = 0;
-    while ((c = getopt(argc, argv, "d:f:ouv")) != EOF)
+    while ((c = getopt(argc, argv, "d:f:ruv")) != EOF)
         switch (c)
         {
         case 'd':
@@ -116,8 +117,8 @@ main(int argc, char **argv)
             find = true;
             findkey = optarg;
             break;
-        case 'o':
-            ovrwrt = true;
+        case 'r':
+            replace = true;
             break;
         case 'u':
             unique = true;
@@ -129,7 +130,7 @@ main(int argc, char **argv)
             fprintf(stderr, "aatree-test [-o|-u] [-v] [-d <key>] [-f <key] keys...\n");
             exit(1);
         }
-    if (ovrwrt && unique)
+    if (replace && unique)
     {
         fprintf(stderr, "aatree-test [-o|-u] [-v] [-d <key>] [-f <key] keys...\n");
         exit(1);
@@ -144,17 +145,17 @@ main(int argc, char **argv)
             *val++ = '\0';
             val = strdup(val);
         }
-        if (!ovrwrt && !unique)
+        if (!replace && !unique)
             root = aatreem_insert(root, key, val);
-        else if (ovrwrt)
+        else if (replace)
         {
-            bool owrt = false;
+            bool replaced = false;
             void *oldval = NULL;
 
-            root = aatreem_overwrite(root, key, val, &owrt, &oldval);
-            if (owrt)
+            root = aatreem_replace(root, key, val, &replaced, &oldval);
+            if (replaced)
             {
-                printf("Overwrote %s, old value is %s\n",
+                printf("Replaced %s, old value is %s\n",
                        key, (oldval != NULL ? (char *)oldval : "(null)"));
                 free(oldval);
             }
