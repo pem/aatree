@@ -105,17 +105,15 @@ aatree_insert_node(aatree_t t, aatree_t n)
 aatree_t
 aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep)
 {
-    int x;
-
     if (t == NULL)
         return n;
-    x = strcmp(n->key, t->key);
-    if (x == 0)
+    int cmp = strcmp(n->key, t->key);
+    if (cmp == 0)
     {
         *uniquep = false;
         return t;
     }
-    if (x < 0)
+    if (cmp < 0)
         t->left = aatree_insert_unique_node(t->left, n, uniquep);
     else
         t->right = aatree_insert_unique_node(t->right, n, uniquep);
@@ -127,12 +125,10 @@ aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep)
 aatree_t
 aatree_replace_node(aatree_t t, aatree_t n, bool *replacedp, void **valuep)
 {
-    int x;
-
     if (t == NULL)
         return n;
-    x = strcmp(n->key, t->key);
-    if (x == 0)
+    int cmp = strcmp(n->key, t->key);
+    if (cmp == 0)
     {
         *replacedp = true;
         if (valuep)
@@ -140,7 +136,7 @@ aatree_replace_node(aatree_t t, aatree_t n, bool *replacedp, void **valuep)
         t->value = n->value;
         return t;
     }
-    if (x < 0)
+    if (cmp < 0)
         t->left = aatree_replace_node(t->left, n, replacedp, valuep);
     else
         t->right = aatree_replace_node(t->right, n, replacedp, valuep);
