@@ -1,0 +1,21 @@
+(1)a:1
+--------------------
+Replaced a, old value is 1
+(1)a:2
+--------------------
+Replaced a, old value is 2
+(1)a:3
+--------------------
+Replaced a, old value is 3
+(1)a:4
+--------------------
+Replaced a, old value is 4
+(1)a:5
+--------------------
+Replaced a, old value is 5
+(1)a:6
+--------------------
+Each: a:6
+--------------------
+Iter: a:6
+--------------------

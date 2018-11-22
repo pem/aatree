@@ -95,19 +95,30 @@ cnode(aatree_t n)
     return true;
 }
 
+static void
+usage(void)
+{
+    fprintf(stderr, "aatree-test [-r|-u|-R old/new] [-v] [-d <key>] [-f <key>] keys...\n");
+    exit(1);
+}
+
 int
 main(int argc, char **argv)
 {
     int c;
-    char *delkey, *findkey;
+    char *delkey, *findkey, *oldkey = NULL, *newkey = NULL;
     bool verbose = false, delete = false, find = false, unique = false,
-        replace = false;
+        replace = false, rename = false;
     aatree_t root = NULL;
 
     opterr = 0;
-    while ((c = getopt(argc, argv, "d:f:ruv")) != EOF)
+    while ((c = getopt(argc, argv, "R:d:f:ruv")) != EOF)
         switch (c)
         {
+        case 'R':
+            rename = true;
+            oldkey = optarg;
+            break;
         case 'd':
             delete = true;
             delkey = optarg;
@@ -126,13 +137,25 @@ main(int argc, char **argv)
             verbose = true;
             break;
         default:
-            fprintf(stderr, "aatree-test [-o|-u] [-v] [-d <key>] [-f <key] keys...\n");
-            exit(1);
+            usage();
         }
-    if (replace && unique)
+    if ((replace && unique) || (replace && rename) || (unique && rename))
+        usage();
+    if (rename)
     {
-        fprintf(stderr, "aatree-test [-o|-u] [-v] [-d <key>] [-f <key] keys...\n");
-        exit(1);
+        oldkey = strdup(oldkey);
+        newkey = strchr(oldkey, '/');
+        if (newkey == NULL)
+        {
+            free(oldkey);
+            usage();
+        }
+        *newkey++ = '\0';
+        if (*oldkey == '\0' || *newkey == '\0')
+        {
+            free(oldkey);
+            usage();
+        }
     }
     for (int i = optind ; i < argc ; i++)
     {
@@ -258,6 +281,18 @@ main(int argc, char **argv)
         printf("Order:");
         (void)aatree_each(root, pnode);
         printf("\n--------------------\n");
+    }
+    if (rename)
+    {
+        printf("Renaming: %s -> %s\n", oldkey, newkey);
+        root = aatreem_rename(root, oldkey, newkey);
+        (void)aatree_each(root, cnode);
+        ptree(root, 0);
+        printf("--------------------\n");
+        printf("Order:");
+        (void)aatree_each(root, pnode);
+        printf("\n--------------------\n");
+        free(oldkey);
     }
 
     aatreem_destroy(root, free);

@@ -125,4 +125,9 @@ aatree_t aatreem_delete(aatree_t t, const char *key,
    it is called on each value pointer. */
 void aatreem_destroy(aatree_t t, void (*freefun)(void *));
 
+/* Rename all occurences of 'oldkey' to 'newkey'. The tree is assumed to
+   allow non-unique keys.
+   Returns the new tree root. */
+aatree_t aatreem_rename(aatree_t t, const char *oldkey, const char *newkey);
+
 #endif /* _aatree_h_ */

@@ -112,3 +112,27 @@ aatreem_destroy(aatree_t t, void (*freefun)(void *))
         t = right;
     }
 }
+
+aatree_t
+aatreem_rename(aatree_t t, const char *oldkey, const char *newkey)
+{
+    while (t != NULL)
+    {
+        aatree_t found = NULL;
+        char *newkeycopy;
+
+        t = aatree_remove_node(t, oldkey, &found);
+        if (found == NULL)
+            break;
+        newkeycopy = strdup(newkey);
+        if (newkeycopy == NULL)
+        {
+            t = NULL;
+            break;
+        }
+        free(aatree_key(found));
+        aatree_init_node(found, newkeycopy, aatree_value(found));
+        t = aatree_insert_node(t, found);
+    }
+    return t;
+}
