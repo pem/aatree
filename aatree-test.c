@@ -268,13 +268,17 @@ main(int argc, char **argv)
     if (delete)
     {
         bool deleted = false;
+        char *delval = NULL;
 
         printf("Deleting: %s\n", delkey);
-        root = aatreem_delete(root, delkey, &deleted, NULL);
+        root = aatreem_delete(root, delkey, &deleted, (void *)&delval);
         if (! deleted)
             printf("  Not deleted\n");
         else
+        {
+            free(delval);
             printf("  Deleted\n");
+        }
         (void)aatree_each(root, cnode);
         ptree(root, 0);
         printf("--------------------\n");

@@ -9,8 +9,8 @@ CCOPTS=-Wpedantic -Wextra -Wall
 
 CCDEFS=-D_POSIX_C_SOURCE=200809L
 
-#CFLAGS=-g -DDEBUG $(CCOPTS) $(CCDEFS)
-CFLAGS=-O2 -fomit-frame-pointer $(CCOPTS) $(CCDEFS)
+CFLAGS=-g -DDEBUG $(CCOPTS) $(CCDEFS)
+#CFLAGS=-O2 -fomit-frame-pointer $(CCOPTS) $(CCDEFS)
 LDFLAGS=
 LDLIBS=
 
