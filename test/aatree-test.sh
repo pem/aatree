@@ -68,6 +68,10 @@ tst "Rename in 6" aaren6yes.txt -R d/z a:1 b:2 c:3 d:4 e:5 f:6
 tst "No rename in aaa..." aarenaaano.txt -R d/z a:1 a:2 a:3 a:4 a:5 a:6
 tst "Rename in aaa..." aarenaaayes.txt -R a/z a:1 a:2 a:3 a:4 a:5 a:6
 
+tst "Abort at 0" aaabrta0.txt a:-1 b:2 c:-3 d:4 e:-5
+tst "Abort at 2" aaabrta2.txt a:1 b:2 c:-3 d:4 e:-5
+tst "Abort at 4" aaabrta4.txt a:1 b:2 c:3 d:4 e:-5
+
 echo
 if [ $xit -ne 0 ]; then
     echo "One or more tests failed"

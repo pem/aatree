@@ -41,6 +41,23 @@ pnode(aatree_t n)
     return true;
 }
 
+static uint32_t AMcount = 0;
+
+static bool
+abortminus(aatree_t n)
+{
+    char *val = aatree_value(n);
+
+    if (val != NULL && val[0] == '-')
+    {
+        printf("Found %s:%s at %u - Aborting!\n",
+               aatree_key(n), val, (unsigned)AMcount);
+        return false;
+    }
+    AMcount += 1;
+    return true;
+}
+
 /* Check invariants for AA Trees */
 static bool
 cnode(aatree_t n)
@@ -199,7 +216,8 @@ main(int argc, char **argv)
             ptree(root, 0);
             printf("--------------------\n");
         }
-        (void)aatree_each(root, cnode);
+        if (! aatree_each(root, cnode))
+            printf("aatree_each cnode returned false\n");
     }
     if (! verbose)
     {
@@ -220,7 +238,8 @@ main(int argc, char **argv)
         free(key);
     }
     printf("Each:");
-    (void)aatree_each(root, pnode);
+    if (! aatree_each(root, pnode))
+            printf("aatree_each pnode returned false\n");
     printf("\n--------------------\n");
     printf("Iter:");
     {
@@ -279,25 +298,32 @@ main(int argc, char **argv)
             free(delval);
             printf("  Deleted\n");
         }
-        (void)aatree_each(root, cnode);
+        if (! aatree_each(root, cnode))
+            printf("aatree_each cnode returned false\n");
         ptree(root, 0);
         printf("--------------------\n");
         printf("Order:");
-        (void)aatree_each(root, pnode);
+        if (! aatree_each(root, pnode))
+            printf("aatree_each pnode returned false\n");
         printf("\n--------------------\n");
     }
     if (rename)
     {
         printf("Renaming: %s -> %s\n", oldkey, newkey);
         root = aatreem_rename(root, oldkey, newkey);
-        (void)aatree_each(root, cnode);
+        if (! aatree_each(root, cnode))
+            printf("aatree_each cnode returned false\n");
         ptree(root, 0);
         printf("--------------------\n");
         printf("Order:");
-        (void)aatree_each(root, pnode);
+        if (! aatree_each(root, pnode))
+            printf("aatree_each pnode returned false\n");
         printf("\n--------------------\n");
         free(oldkey);
     }
+
+    if (! aatree_each(root, abortminus))
+        printf("Aborted on minus\n");
 
     aatreem_destroy(root, free);
 

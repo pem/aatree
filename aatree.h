@@ -52,8 +52,9 @@ aatree_t aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep);
 
 /* Insert the node into the tree. If a node with the same key already
    exists, the value of that node is replaced and *valuep is set to
-   the old value and *replacedp to true, otherwise it's inserted the normal way.
-   Note that when replaced, the node 'n' will is unused, only its value
+   the old value and *replacedp to true, otherwise it's inserted the
+   normal way.
+   Note that when replaced, the node 'n' is unused, only its value
    is copied. *replacedp must be set to false before the call.
    Returns the new tree root. */
 aatree_t aatree_replace_node(aatree_t t, aatree_t n,
