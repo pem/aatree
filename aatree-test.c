@@ -63,7 +63,7 @@ static bool
 cnode(aatree_t n)
 {
     char *key = aatree_key(n);
-    uint32_t level = aatree_level(n);
+    aatree_level_t level = aatree_level(n);
     aatree_t left = aatree_left(n);
     aatree_t right = aatree_right(n);
 
@@ -74,7 +74,7 @@ cnode(aatree_t n)
        its parent */
     if (left != NULL)
     {
-        uint32_t llevel = aatree_level(left);
+        aatree_level_t llevel = aatree_level(left);
 
         if (llevel != level-1)
             printf("2: Left child %s of %s has level %u, not %u\n",
@@ -85,7 +85,7 @@ cnode(aatree_t n)
        of its parent */
     if (right != NULL)
     {
-        uint32_t rlevel = aatree_level(right);
+        aatree_level_t rlevel = aatree_level(right);
 
         if (rlevel != level && rlevel != level-1)
             printf("3: Right child %s of %s has level %u, not %u or %u\n",
@@ -97,7 +97,7 @@ cnode(aatree_t n)
 
         if (gright != NULL)
         {
-            uint32_t glevel = aatree_level(gright);
+            aatree_level_t glevel = aatree_level(gright);
 
             if (glevel >= level)
                 printf("4: Right grandchild %s of %s has level %u, not < %u\n",
@@ -201,12 +201,14 @@ main(int argc, char **argv)
         }
         else
         {
-            bool u = true;
+            aatree_t x = NULL;
 
-            root = aatreem_insert_unique(root, key, val, &u);
-            if (! u)
+            root = aatreem_insert_unique(root, key, val, &x);
+            if (x != NULL)
             {
-                printf("Key is not unique: %s\n", key);
+                printf("Key is not unique:");
+                pnode(x);
+                putchar('\n');
                 free(val);
             }
         }

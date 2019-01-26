@@ -3,8 +3,7 @@
 **
 */
 
-#ifndef _aatree_h_
-#define _aatree_h_
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -16,7 +15,7 @@ typedef struct aatree_s *aatree_t;
    In theory, the number of bits needed is log2(h) where h is the
    height of the tree. */
 typedef uint32_t aatree_level_t;
-#define AATREE_MAX_DEPTH 32
+#define AATREE_MAX_DEPTH 64
 typedef struct aatree_iter_s
 {
     const char *key;
@@ -45,10 +44,10 @@ aatree_level_t aatree_level(aatree_t t);
 aatree_t aatree_insert_node(aatree_t t, aatree_t n);
 
 /* Insert the node into the tree. The key must be unique. If not,
-   no insertion is done and *uniquep is set to false. *uniquep must be
-   set to true before the call.
+   no insertion is done and *xistsp is set to the already existing
+   node. *xistsp must be set to NULL before the call.
    Returns the new tree root. */
-aatree_t aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep);
+aatree_t aatree_insert_unique_node(aatree_t t, aatree_t n, aatree_t *xistsp);
 
 /* Insert the node into the tree. If a node with the same key already
    exists, the value of that node is replaced and *valuep is set to
@@ -104,7 +103,7 @@ aatree_t aatreem_insert(aatree_t t, const char *key, void *value);
    set to false. *uniquep must be set to true before the call.
    Returns the new tree root. */
 aatree_t aatreem_insert_unique(aatree_t t, const char *key, void *value,
-                               bool *uniquep);
+                               aatree_t *xistsp);
 
 /* Insert the key-value pair. If a node with the same key already
    exists, the value of that node is replaced and *valuep is set to
@@ -130,5 +129,3 @@ void aatreem_destroy(aatree_t t, void (*freefun)(void *));
    allow non-unique keys.
    Returns the new tree root. */
 aatree_t aatreem_rename(aatree_t t, const char *oldkey, const char *newkey);
-
-#endif /* _aatree_h_ */

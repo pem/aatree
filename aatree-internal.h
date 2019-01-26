@@ -3,8 +3,7 @@
 **
 */
 
-#ifndef _aatree_internal_h_
-#define _aatree_internal_h_
+#pragma once
 
 struct aatree_s
 {
@@ -13,5 +12,3 @@ struct aatree_s
     char *key;
     void *value;
 };
-
-#endif /* _aatree_internal_h_ */

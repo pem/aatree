@@ -102,20 +102,20 @@ aatree_insert_node(aatree_t t, aatree_t n)
 }
 
 aatree_t
-aatree_insert_unique_node(aatree_t t, aatree_t n, bool *uniquep)
+aatree_insert_unique_node(aatree_t t, aatree_t n,  aatree_t *xistsp)
 {
     if (t == NULL)
         return n;
     int cmp = strcmp(n->key, t->key);
     if (cmp == 0)
     {
-        *uniquep = false;
+        *xistsp = t;
         return t;
     }
     if (cmp < 0)
-        t->left = aatree_insert_unique_node(t->left, n, uniquep);
+        t->left = aatree_insert_unique_node(t->left, n, xistsp);
     else
-        t->right = aatree_insert_unique_node(t->right, n, uniquep);
+        t->right = aatree_insert_unique_node(t->right, n, xistsp);
     t = aatree_skew(t);
     t = aatree_split(t);
     return t;

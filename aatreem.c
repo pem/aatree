@@ -29,7 +29,8 @@ aatreem_insert(aatree_t t, const char *key, void *value)
 }
 
 aatree_t
-aatreem_insert_unique(aatree_t t, const char *key, void *value, bool *uniquep)
+aatreem_insert_unique(aatree_t t, const char *key, void *value,
+                      aatree_t *xistsp)
 {
     aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
     char *keycopy;
@@ -43,8 +44,8 @@ aatreem_insert_unique(aatree_t t, const char *key, void *value, bool *uniquep)
         return NULL;
     }
     aatree_init_node(n, keycopy, value);
-    newt = aatree_insert_unique_node(t, n, uniquep);
-    if (! *uniquep)
+    newt = aatree_insert_unique_node(t, n, xistsp);
+    if (*xistsp != NULL)
     {
         free(keycopy);
         free(n);
