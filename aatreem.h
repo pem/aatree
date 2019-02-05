@@ -45,7 +45,8 @@ bool aatreem_replace(aatree_t *t, const char *key, void *value,
    to the value associated to the key. Both removep and valuep can
    be NULL. The removed node is freed.
    Returns the new tree root. */
-bool aatreem_delete(aatree_t *t, const char *key, void **deletedp);
+bool aatreem_delete(aatree_t *t, const char *key, aatree_condition_fun_t *cond,
+                    void **deletedp);
 
 /* Destroy the tree by freeing all the nodes. If 'freefun' not NULL,
    it is called on each value pointer. */

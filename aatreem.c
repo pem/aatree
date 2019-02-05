@@ -135,9 +135,10 @@ aatreem_replace(aatree_t *t, const char *key, void *value,
 }
 
 bool
-aatreem_delete(aatree_t *t, const char *key, void **deletedp)
+aatreem_delete(aatree_t *t, const char *key, aatree_condition_fun_t *cond,
+               void **deletedp)
 {
-    aatreem_node_t *node = (aatreem_node_t *)aatree_remove_node(t, (void *)key);
+    aatreem_node_t *node = (aatreem_node_t *)aatree_remove_node(t, (void *)key, cond);
 
     if (deletedp != NULL)
         *deletedp = (node != NULL ? node->value : NULL);
@@ -220,7 +221,7 @@ aatreem_rename(aatree_t *t, const char *oldkey, const char *newkey)
     {
         char *keycopy;
         aatreem_node_t *deleted =
-            (aatreem_node_t *)aatree_remove_node(t, (void *)oldkey);
+            (aatreem_node_t *)aatree_remove_node(t, (void *)oldkey, NULL);
 
         if (deleted == NULL)
             break;              /* Done */

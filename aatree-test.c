@@ -62,6 +62,17 @@ abortminus(aatree_t *t, aatree_node_t *n)
     return true;
 }
 
+static char *CondValue = NULL;
+
+static bool
+condval(aatree_t *t, aatree_node_t *n)
+{
+    UNUSED(t);
+    char *val = aatree_value(n);
+
+    return (strcmp(val, CondValue) == 0);
+}
+
 /* Check invariants for AA Trees */
 static bool
 cnode(aatree_t *t, aatree_node_t *n)
@@ -120,7 +131,7 @@ cnode(aatree_t *t, aatree_node_t *n)
 static void
 usage(void)
 {
-    fprintf(stderr, "aatree-test [-r|-u|-R old/new] [-v] [-d <key>] [-f <key>] keys...\n");
+    fprintf(stderr, "aatree-test [-r|-u|-R old/new] [-v] [-d <key> [-C <condval>]] [-f <key>] keys...\n");
     exit(1);
 }
 
@@ -132,11 +143,16 @@ main(int argc, char **argv)
     bool verbose = false, delete = false, find = false, unique = false,
         replace = false, rename = false;
     aatree_t *root = NULL;
+    aatree_condition_fun_t *cond = NULL;
 
     opterr = 0;
-    while ((c = getopt(argc, argv, "R:d:f:ruv")) != EOF)
+    while ((c = getopt(argc, argv, "C:R:d:f:ruv")) != EOF)
         switch (c)
         {
+        case 'C':
+            CondValue = optarg;
+            cond = condval;
+            break;
         case 'R':
             rename = true;
             oldkey = optarg;
@@ -161,7 +177,8 @@ main(int argc, char **argv)
         default:
             usage();
         }
-    if ((replace && unique) || (replace && rename) || (unique && rename))
+    if ((replace && unique) || (replace && rename) || (unique && rename) ||
+        (CondValue != NULL && !delete))
         usage();
 
     root = aatreem_create();
@@ -299,7 +316,7 @@ main(int argc, char **argv)
         char *delval = NULL;
 
         printf("Deleting: %s\n", delkey);
-        if (! aatreem_delete(root, delkey, (void *)&delval))
+        if (! aatreem_delete(root, delkey, cond, (void *)&delval))
             printf("  Not deleted\n");
         else
         {

@@ -195,13 +195,13 @@ remove_find_predecessor(aatree_t *b,
 
 static aatree_node_t *
 remove_recursive(aatree_t *b,
-                 aatree_node_t *t, void *keyp,
+                 aatree_node_t *t, void *keyp, aatree_condition_fun_t *cond,
                  aatree_node_t **removedp)
 {
     if (t == NULL)
         return NULL;            /* Not found */
     int cmp = b->compare(b, keyp, t);
-    if (cmp == 0)
+    if (cmp == 0 && (cond == NULL || cond(b, t)))
     {                           /* Found it */
         if (t->right != NULL)   /* Pick right branch, if any */
             t->right = remove_find_successor(b, t->right, t, removedp);
@@ -216,9 +216,9 @@ remove_recursive(aatree_t *b,
     else
     {                           /* Keep looking */
         if (t->left != NULL && cmp < 0)
-            t->left = remove_recursive(b,t->left, keyp, removedp);
+            t->left = remove_recursive(b,t->left, keyp, cond, removedp);
         else if (t->right != NULL)
-            t->right = remove_recursive(b, t->right, keyp, removedp);
+            t->right = remove_recursive(b, t->right, keyp, cond, removedp);
         else
             return t;           /* A leaf */
     }
@@ -226,11 +226,11 @@ remove_recursive(aatree_t *b,
 }
 
 aatree_node_t *
-aatree_remove_node(aatree_t *t, void *keyp)
+aatree_remove_node(aatree_t *t, void *keyp, aatree_condition_fun_t *cond)
 {
     aatree_node_t *node = NULL;
 
-    t->root = remove_recursive(t, t->root, keyp, &node);
+    t->root = remove_recursive(t, t->root, keyp, cond, &node);
     return node;
 }
 

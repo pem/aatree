@@ -25,14 +25,15 @@ struct aatree_node_s
 
 typedef struct aatree_s aatree_t;
 
-typedef int aatree_compare_fun(aatree_t *, void *keyp, aatree_node_t *);
-typedef void aatree_swap_fun(aatree_t *, aatree_node_t *, aatree_node_t *);
+typedef int aatree_compare_fun_t(aatree_t *, void *keyp, aatree_node_t *);
+typedef void aatree_swap_fun_t(aatree_t *, aatree_node_t *, aatree_node_t *);
+typedef bool aatree_condition_fun_t(aatree_t *, aatree_node_t *);
 
 struct aatree_s
 {
     aatree_node_t *root;
-    aatree_compare_fun *compare;
-    aatree_swap_fun *swap;
+    aatree_compare_fun_t *compare;
+    aatree_swap_fun_t *swap;
 };
 
 typedef struct aatree_iter_s
@@ -63,11 +64,13 @@ aatree_node_t *aatree_insert_unique_node(aatree_t *t,
 aatree_node_t *aatree_replace_node(aatree_t *t,
                                    void *keyp, aatree_node_t *n);
 
-/* Remove a node with matching key. *nodep is set to the removed node
-   if it was found, or NULL otherwise. It will remove the first matching
+/* Remove a node with matching key. If 'cond' is given, the condition
+   must return true as well for it to match. *nodep is set to the removed
+   node if it was found, or NULL otherwise. It will remove the first matching
    node it encounters in the tree.
    Returns the new tree root. */
-aatree_node_t *aatree_remove_node(aatree_t *t, void *keyp);
+aatree_node_t *aatree_remove_node(aatree_t *t, void *keyp,
+                                  aatree_condition_fun_t *cond);
 
 /* Find a node matching 'key'. The comparison is done with strcmp().
    It will return the first matching node it encounters in the tree.
