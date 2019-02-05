@@ -8,10 +8,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "aatree.h"
+#include "aatreem.h"
+
+#define UNUSED(x) ((void)(x))
 
 static void
-ptree(aatree_t n, int indent)
+ptree(aatree_node_t *n, int indent)
 {
     if (n != NULL)
     {
@@ -30,8 +32,9 @@ ptree(aatree_t n, int indent)
 }
     
 static bool
-pnode(aatree_t n)
+pnode(aatree_t *t, aatree_node_t *n)
 {
+    UNUSED(t);
     char *val = aatree_value(n);
 
     if (val == NULL)
@@ -44,8 +47,9 @@ pnode(aatree_t n)
 static uint32_t AMcount = 0;
 
 static bool
-abortminus(aatree_t n)
+abortminus(aatree_t *t, aatree_node_t *n)
 {
+    UNUSED(t);
     char *val = aatree_value(n);
 
     if (val != NULL && val[0] == '-')
@@ -60,12 +64,13 @@ abortminus(aatree_t n)
 
 /* Check invariants for AA Trees */
 static bool
-cnode(aatree_t n)
+cnode(aatree_t *t, aatree_node_t *n)
 {
+    UNUSED(t);
     char *key = aatree_key(n);
     aatree_level_t level = aatree_level(n);
-    aatree_t left = aatree_left(n);
-    aatree_t right = aatree_right(n);
+    aatree_node_t *left = aatree_left(n);
+    aatree_node_t *right = aatree_right(n);
 
     /* 1. The level of every leaf node is one */
     if (left == NULL && right == NULL && level != 1)
@@ -93,7 +98,7 @@ cnode(aatree_t n)
                    (unsigned)level, (unsigned)(level-1));
         /* 4. The level of every right grandchild is strictly less than that
            of its grandparent */
-        aatree_t gright = aatree_right(right);
+        aatree_node_t *gright = aatree_right(right);
 
         if (gright != NULL)
         {
@@ -126,7 +131,7 @@ main(int argc, char **argv)
     char *delkey, *findkey, *oldkey = NULL, *newkey = NULL;
     bool verbose = false, delete = false, find = false, unique = false,
         replace = false, rename = false;
-    aatree_t root = NULL;
+    aatree_t *root = NULL;
 
     opterr = 0;
     while ((c = getopt(argc, argv, "R:d:f:ruv")) != EOF)
@@ -158,6 +163,9 @@ main(int argc, char **argv)
         }
     if ((replace && unique) || (replace && rename) || (unique && rename))
         usage();
+
+    root = aatreem_create();
+
     if (rename)
     {
         oldkey = strdup(oldkey);
@@ -185,14 +193,13 @@ main(int argc, char **argv)
             val = strdup(val);
         }
         if (!replace && !unique)
-            root = aatreem_insert(root, key, val);
+            aatreem_insert(root, key, val);
         else if (replace)
         {
-            bool replaced = false;
             void *oldval = NULL;
 
-            root = aatreem_replace(root, key, val, &replaced, &oldval);
-            if (replaced)
+            aatreem_replace(root, key, val, &oldval);
+            if (oldval != NULL)
             {
                 printf("Replaced %s, old value is %s\n",
                        key, (oldval != NULL ? (char *)oldval : "(null)"));
@@ -201,13 +208,14 @@ main(int argc, char **argv)
         }
         else
         {
-            aatree_t x = NULL;
+            void *xists = NULL;
 
-            root = aatreem_insert_unique(root, key, val, &x);
-            if (x != NULL)
+            if (! aatreem_insert_unique(root, key, val, &xists))
             {
                 printf("Key is not unique:");
-                pnode(x);
+                printf(" %s", key);
+                if (xists != NULL)
+                    printf(":%s", (char *)xists);
                 putchar('\n');
                 free(val);
             }
@@ -215,7 +223,7 @@ main(int argc, char **argv)
         free(key);
         if (verbose)
         {
-            ptree(root, 0);
+            ptree(root->root, 0);
             printf("--------------------\n");
         }
         if (! aatree_each(root, cnode))
@@ -223,12 +231,12 @@ main(int argc, char **argv)
     }
     if (! verbose)
     {
-        ptree(root, 0);
+        ptree(root->root, 0);
         printf("--------------------\n");
     }
     for (int i = optind ; i < argc ; i++)
     {
-        aatree_t n;
+        aatree_node_t *n;
         char *key = strdup(argv[i]); /* Because we might write in it */
         char *val = strchr(key, ':');
 
@@ -241,23 +249,23 @@ main(int argc, char **argv)
     }
     printf("Each:");
     if (! aatree_each(root, pnode))
-            printf("aatree_each pnode returned false\n");
+        printf("aatree_each pnode returned false\n");
     printf("\n--------------------\n");
     printf("Iter:");
     {
         aatree_iter_t iter;
-        aatree_t n;
+        aatree_node_t *n;
         if (! aatree_iter_init(root, &iter))
             fprintf(stderr, "Tree is too deep for iterator\n");
         else
             while ((n = aatree_iter_next(&iter)) != NULL)
-                (void)pnode(n);
+                (void)pnode(root, n);
     }
     printf("\n--------------------\n");
 
     if (find)
     {
-        aatree_t n;
+        aatree_node_t *n;
         aatree_iter_t iter;
 
         printf("Find: %s\n", findkey);
@@ -288,12 +296,10 @@ main(int argc, char **argv)
     }
     if (delete)
     {
-        bool deleted = false;
         char *delval = NULL;
 
         printf("Deleting: %s\n", delkey);
-        root = aatreem_delete(root, delkey, &deleted, (void *)&delval);
-        if (! deleted)
+        if (! aatreem_delete(root, delkey, (void *)&delval))
             printf("  Not deleted\n");
         else
         {
@@ -302,7 +308,7 @@ main(int argc, char **argv)
         }
         if (! aatree_each(root, cnode))
             printf("aatree_each cnode returned false\n");
-        ptree(root, 0);
+        ptree(root->root, 0);
         printf("--------------------\n");
         printf("Order:");
         if (! aatree_each(root, pnode))
@@ -312,10 +318,10 @@ main(int argc, char **argv)
     if (rename)
     {
         printf("Renaming: %s -> %s\n", oldkey, newkey);
-        root = aatreem_rename(root, oldkey, newkey);
+        aatreem_rename(root, oldkey, newkey);
         if (! aatree_each(root, cnode))
             printf("aatree_each cnode returned false\n");
-        ptree(root, 0);
+        ptree(root->root, 0);
         printf("--------------------\n");
         printf("Order:");
         if (! aatree_each(root, pnode))

@@ -8,132 +8,229 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "aatree.h"
-#include "aatree-internal.h"
+#include "aatreem.h"
 
-aatree_t
-aatreem_insert(aatree_t t, const char *key, void *value)
+#define UNUSED(x) ((void)(x))
+
+typedef struct aatreem_node_s
 {
-    aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
-    char *keycopy;
+    aatree_node_t n;
+    char *key;
+    void *value;
+} aatreem_node_t;
 
-    if (n == NULL)
-        return NULL;
-    if ((keycopy = strdup(key)) == NULL)
-    {
-        free(n);
-        return NULL;
-    }
-    aatree_init_node(n, keycopy, value);
-    return aatree_insert_node(t, n);
+char *
+aatree_key(aatree_node_t *t)
+{
+    aatreem_node_t *n = (aatreem_node_t *)t;
+    return n->key;
 }
 
-aatree_t
-aatreem_insert_unique(aatree_t t, const char *key, void *value,
-                      aatree_t *xistsp)
+void *
+aatree_value(aatree_node_t *t)
 {
-    aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
+    aatreem_node_t *n = (aatreem_node_t *)t;
+    return n->value;
+}
+
+aatree_node_t *
+aatree_left(aatree_node_t *t)
+{
+    aatreem_node_t *n = (aatreem_node_t *)t;
+    return n->n.left;
+}
+
+aatree_node_t *
+aatree_right(aatree_node_t *t)
+{
+    aatreem_node_t *n = (aatreem_node_t *)t;
+    return n->n.right;
+}
+
+aatree_level_t
+aatree_level(aatree_node_t *t)
+{
+    aatreem_node_t *n = (aatreem_node_t *)t;
+    return n->n.level;
+}
+
+
+bool
+aatreem_insert(aatree_t *t, const char *key, void *value)
+{
+    aatreem_node_t *n = malloc(sizeof(aatreem_node_t));
     char *keycopy;
-    aatree_t newt;
 
     if (n == NULL)
-        return NULL;
+        return false;
     if ((keycopy = strdup(key)) == NULL)
     {
         free(n);
-        return NULL;
+        return false;
     }
-    aatree_init_node(n, keycopy, value);
-    newt = aatree_insert_unique_node(t, n, xistsp);
-    if (*xistsp != NULL)
+    aatree_init_node(&n->n);
+    n->key = keycopy;
+    n->value = value;
+    aatree_insert_node(t, n->key, &n->n);
+    return true;
+}
+
+bool
+aatreem_insert_unique(aatree_t *t, const char *key, void *value,
+                      void **xistsp)
+{
+    aatreem_node_t *n = malloc(sizeof(aatreem_node_t));
+    char *keycopy;
+
+    if (n == NULL)
+        return false;
+    if ((keycopy = strdup(key)) == NULL)
+    {
+        free(n);
+        return false;
+    }
+    aatree_init_node(&n->n);
+    n->key = keycopy;
+    n->value = value;
+    aatreem_node_t *xists =
+        (aatreem_node_t *)aatree_insert_unique_node(t, n->key, &n->n);
+    if (xistsp != NULL)
+        *xistsp = (xists != NULL ? xists->value : NULL);
+    if (xists != NULL)
     {
         free(keycopy);
         free(n);
+        return false;
     }
-    return newt;
+    return true;
 }
 
-aatree_t
-aatreem_replace(aatree_t t, const char *key, void *value,
-                bool *replacedp, void **valuep)
+bool
+aatreem_replace(aatree_t *t, const char *key, void *value,
+                void **replacedp)
 {
-    aatree_t n = (aatree_t)malloc(sizeof(struct aatree_s));
+    aatreem_node_t *n = malloc(sizeof(aatreem_node_t));
     char *keycopy;
-    aatree_t newt;
 
     if (n == NULL)
-        return NULL;
+        return false;
     if ((keycopy = strdup(key)) == NULL)
     {
         free(n);
-        return NULL;
+        return false;
     }
-    aatree_init_node(n, keycopy, value);
-    newt = aatree_replace_node(t, n, replacedp, valuep);
-    if (*replacedp)
+    aatree_init_node(&n->n);
+    n->key = keycopy;
+    n->value = value;
+    aatreem_node_t *replaced =
+        (aatreem_node_t *)aatree_replace_node(t, n->key, &n->n);
+    if (replacedp != NULL)
+        *replacedp = (replaced != NULL ? replaced->value : NULL);
+    if (replaced != NULL)
     {
-        free(keycopy);
+        free(replaced->key);
         free(n);
     }
-    return newt;
+    return true;
 }
 
-aatree_t
-aatreem_delete(aatree_t t, const char *key,
-               bool *deletedp, void **valuep)
+bool
+aatreem_delete(aatree_t *t, const char *key, void **deletedp)
 {
-    aatree_t node = NULL;
+    aatreem_node_t *node = (aatreem_node_t *)aatree_remove_node(t, (void *)key);
 
-    t = aatree_remove_node(t, key, &node);
     if (deletedp != NULL)
-        *deletedp = (node != NULL);
-    if (node != NULL)
-    {
-        free(node->key);
-        if (valuep != NULL)
-            *valuep = node->value;
-        free(node);
-    }
+        *deletedp = (node != NULL ? node->value : NULL);
+    if (node == NULL)
+        return false;
+    free(node->key);
+    free(node);
+    return true;
+}
+
+static int
+aatreem_compare(aatree_t *t, void *keyp, aatree_node_t *b)
+{
+    UNUSED(t);
+    char *key = keyp;
+    aatreem_node_t *bm = (aatreem_node_t *)b;
+
+    return strcmp(key, bm->key);
+}
+
+static void
+aatreem_swap(aatree_t *t, aatree_node_t *a, aatree_node_t *b)
+{
+    UNUSED(t);
+    aatreem_node_t *am = (aatreem_node_t *)a;
+    aatreem_node_t *bm = (aatreem_node_t *)b;
+    char *tmpkey;
+    void *tmpval;
+
+    tmpkey = am->key;
+    am->key = bm->key;
+    bm->key = tmpkey;
+    tmpval = am->value;
+    am->value = bm->value;
+    bm->value = tmpval;
+}
+
+aatree_t *
+aatreem_create(void)
+{
+    aatree_t *t = malloc(sizeof(aatree_t));
+
+    t->root = NULL;
+    t->compare = aatreem_compare;
+    t->swap = aatreem_swap;
     return t;
 }
 
-void
-aatreem_destroy(aatree_t t, void (*freefun)(void *))
+static void
+aatreem_destroy_rec(aatree_node_t *t, void (*freefun)(void *))
 {
     while (t != NULL)
     {
-        aatree_t left = t->left;
-        aatree_t right = t->right;
+        aatree_node_t *left = t->left;
+        aatree_node_t *right = t->right;
+        aatreem_node_t *n = (aatreem_node_t *)t;
 
-        free(t->key);
+        free(n->key);
         if (freefun != NULL)
-            freefun(t->value);
-        free(t);
-        aatreem_destroy(left, freefun);
+            freefun(n->value);
+        free(n);
+        aatreem_destroy_rec(left, freefun);
         t = right;
     }
 }
 
-aatree_t
-aatreem_rename(aatree_t t, const char *oldkey, const char *newkey)
+void
+aatreem_destroy(aatree_t *t, void (*freefun)(void *))
 {
-    while (t != NULL)
-    {
-        aatree_t found = NULL;
-        char *newkeycopy;
+    aatreem_destroy_rec(t->root, freefun);
+    free(t);
+}
 
-        t = aatree_remove_node(t, oldkey, &found);
-        if (found == NULL)
-            break;
-        newkeycopy = strdup(newkey);
-        if (newkeycopy == NULL)
-        {
-            t = NULL;
-            break;
-        }
-        free(aatree_key(found));
-        aatree_init_node(found, newkeycopy, aatree_value(found));
-        t = aatree_insert_node(t, found);
+bool
+aatreem_rename(aatree_t *t, const char *oldkey, const char *newkey)
+{
+    aatreem_node_t *n = (aatreem_node_t *)t->root;
+
+    while (n != NULL)
+    {
+        char *keycopy;
+        aatreem_node_t *deleted =
+            (aatreem_node_t *)aatree_remove_node(t, (void *)oldkey);
+
+        if (deleted == NULL)
+            break;              /* Done */
+        deleted->n.left = deleted->n.right = NULL;
+        keycopy = strdup(newkey);
+        if (keycopy == NULL)
+            return false;
+        free(deleted->key);
+        deleted->key = keycopy;
+        aatree_insert_node(t, keycopy, (aatree_node_t *)deleted);
     }
-    return t;
+    return true;
 }

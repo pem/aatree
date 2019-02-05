@@ -10,76 +10,37 @@
 #include <string.h>
 
 #include "aatree.h"
-#include "aatree-internal.h"
-
-size_t
-aatree_sizeof(void)
-{
-    return sizeof(struct aatree_s);
-}
 
 void
-aatree_init_node(aatree_t n, char *key, void *value)
+aatree_init_node(aatree_node_t *n)
 {
     memset(n, 0, sizeof(struct aatree_s));
-    n->key = key;
-    n->value = value;
     n->level = 1;
 }
 
-char *
-aatree_key(aatree_t t)
-{
-    return t->key;
-}
-
-void *
-aatree_value(aatree_t t)
-{
-    return t->value;
-}
-
-aatree_t
-aatree_left(aatree_t t)
-{
-    return t->left;
-}
-
-aatree_t
-aatree_right(aatree_t t)
-{
-    return t->right;
-}
-
-aatree_level_t
-aatree_level(aatree_t t)
-{
-    return t->level;
-}
-
-static aatree_t
-aatree_skew(aatree_t t)
+static aatree_node_t *
+aatree_skew(aatree_node_t *t)
 {
     if (t == NULL)
         return NULL;
     if (t->left == NULL || t->level != t->left->level)
         return t;
-    aatree_t tmp = t;
+    aatree_node_t *tmp = t;
     t = t->left;
     tmp->left = t->right;
     t->right = tmp;
     return t;
 }
 
-static aatree_t
-aatree_split(aatree_t t)
+static aatree_node_t *
+aatree_split(aatree_node_t *t)
 {
     if (t == NULL)
         return NULL;
     if (t->right == NULL || t->right->right == NULL ||
         t->level != t->right->right->level)
         return t;
-    aatree_t tmp = t;
+    aatree_node_t *tmp = t;
     t = t->right;
     tmp->right = t->left;
     t->left = tmp;
@@ -87,67 +48,91 @@ aatree_split(aatree_t t)
     return t;
 }
 
-aatree_t
-aatree_insert_node(aatree_t t, aatree_t n)
+static aatree_node_t *
+insert_node(aatree_t *b, aatree_node_t *t, void *keyp, aatree_node_t *n)
 {
     if (t == NULL)
         return n;
-    if (strcmp(n->key, t->key) < 0)
-        t->left = aatree_insert_node(t->left, n);
+    if (b->compare(b, keyp, t) < 0)
+        t->left = insert_node(b, t->left, keyp, n);
     else
-        t->right = aatree_insert_node(t->right, n);
+        t->right = insert_node(b, t->right, keyp, n);
     t = aatree_skew(t);
     t = aatree_split(t);
     return t;
 }
 
-aatree_t
-aatree_insert_unique_node(aatree_t t, aatree_t n,  aatree_t *xistsp)
+void
+aatree_insert_node(aatree_t *t, void *keyp, aatree_node_t *n)
+{
+    t->root = insert_node(t, t->root, keyp, n);
+}
+
+static aatree_node_t *
+insert_unique_node(aatree_t *b, aatree_node_t *t,
+                   void *keyp, aatree_node_t *n,  aatree_node_t **xistsp)
 {
     if (t == NULL)
         return n;
-    int cmp = strcmp(n->key, t->key);
+    int cmp = b->compare(b, keyp, t);
     if (cmp == 0)
     {
         *xistsp = t;
         return t;
     }
     if (cmp < 0)
-        t->left = aatree_insert_unique_node(t->left, n, xistsp);
+        t->left = insert_unique_node(b, t->left, keyp, n, xistsp);
     else
-        t->right = aatree_insert_unique_node(t->right, n, xistsp);
+        t->right = insert_unique_node(b, t->right, keyp, n, xistsp);
     t = aatree_skew(t);
     t = aatree_split(t);
     return t;
 }
 
-aatree_t
-aatree_replace_node(aatree_t t, aatree_t n, bool *replacedp, void **valuep)
+aatree_node_t *
+aatree_insert_unique_node(aatree_t *t, void *keyp, aatree_node_t *n)
+{
+    aatree_node_t *xists = NULL;
+
+    t->root = insert_unique_node(t, t->root, keyp, n, &xists);
+    return xists;
+}
+
+static aatree_node_t *
+replace_node(aatree_t *b, aatree_node_t *t,
+             void *keyp, aatree_node_t *n, aatree_node_t **replp)
 {
     if (t == NULL)
         return n;
-    int cmp = strcmp(n->key, t->key);
+    int cmp = b->compare(b, keyp, t);
     if (cmp == 0)
     {
-        *replacedp = true;
-        if (valuep)
-            *valuep = t->value;
-        t->value = n->value;
+        b->swap(b, n, t);
+        *replp = n;
         return t;
     }
     if (cmp < 0)
-        t->left = aatree_replace_node(t->left, n, replacedp, valuep);
+        t->left = replace_node(b, t->left, keyp, n, replp);
     else
-        t->right = aatree_replace_node(t->right, n, replacedp, valuep);
+        t->right = replace_node(b, t->right, keyp, n, replp);
     t = aatree_skew(t);
     t = aatree_split(t);
     return t;
+}
+
+aatree_node_t *
+aatree_replace_node(aatree_t *t, void *keyp, aatree_node_t *n)
+{
+    aatree_node_t *repl = NULL;
+
+    t->root = replace_node(t, t->root, keyp, n, &repl);
+    return repl;
 }
 
 /* Correct the levels and re-balance; refer to the original article or other
    texts about AA Trees for details. */
-static aatree_t
-aatree_post_remove_fix(aatree_t t)
+static aatree_node_t *
+aatree_post_remove_fix(aatree_node_t *t)
 {
     if (t != NULL)
     {
@@ -176,60 +161,52 @@ aatree_post_remove_fix(aatree_t t)
     return t;
 }
 
-/* Technically it's only necessary to update the found node, but we swap
-   the values so we can return the removed key and value to the caller. */
-static void
-aatree_swap(aatree_t found, aatree_t leaf)
-{
-    char *key = found->key;
-    void *value = found->value;
-
-    found->key = leaf->key;
-    found->value = leaf->value;
-    leaf->key = key;
-    leaf->value = value;
-}
-
-static aatree_t
-aatree_remove_find_successor(aatree_t t, aatree_t found, aatree_t *removedp)
+static aatree_node_t *
+remove_find_successor(aatree_t *b,
+                      aatree_node_t *t, aatree_node_t *found,
+                      aatree_node_t **removedp)
 {
     if (t->left == NULL)
     {                           /* Found successor */
-        aatree_swap(found, t);
+        b->swap(b, found, t);
         *removedp = t;
         return t->right;
     }
-    t->left = aatree_remove_find_successor(t->left, found, removedp);
+    t->left = remove_find_successor(b, t->left, found, removedp);
     return aatree_post_remove_fix(t);
 }
 
 /* Will an AA Tree ever have such a shape that we have to find the
    predecessor? Don't know, so we'll keep this just in case... */
-static aatree_t
-aatree_remove_find_predecessor(aatree_t t, aatree_t found, aatree_t *removedp)
+static aatree_node_t *
+remove_find_predecessor(aatree_t *b,
+                        aatree_node_t *t, aatree_node_t *found,
+                        aatree_node_t **removedp)
 {
     if (t->right == NULL)
     {                           /* Found predecessor */
-        aatree_swap(found, t);
+        b->swap(b, found, t);
         *removedp = t;
         return t->left;
     }
-    t->right = aatree_remove_find_predecessor(t->right, found, removedp);
+    t->right = remove_find_predecessor(b, t->right, found, removedp);
     return aatree_post_remove_fix(t);
 }
 
-static aatree_t
-aatree_remove_recursive(aatree_t t, const char *key, aatree_t *removedp)
+static aatree_node_t *
+remove_recursive(aatree_t *b,
+                 aatree_node_t *t, void *keyp,
+                 aatree_node_t **removedp)
 {
     if (t == NULL)
         return NULL;            /* Not found */
-    int cmp = strcmp(key, t->key);
+    int cmp = b->compare(b, keyp, t);
     if (cmp == 0)
     {                           /* Found it */
         if (t->right != NULL)   /* Pick right branch, if any */
-            t->right = aatree_remove_find_successor(t->right, t, removedp);
+            t->right = remove_find_successor(b, t->right, t, removedp);
         else if (t->left != NULL) /* Will this ever happen? */
-            t->left = aatree_remove_find_predecessor(t->left, t, removedp);
+            t->left = remove_find_predecessor(b, t->left, t, removedp);
         else
         {                       /* Found a leaf */
             *removedp = t;
@@ -239,51 +216,51 @@ aatree_remove_recursive(aatree_t t, const char *key, aatree_t *removedp)
     else
     {                           /* Keep looking */
         if (t->left != NULL && cmp < 0)
-            t->left = aatree_remove_recursive(t->left, key, removedp);
+            t->left = remove_recursive(b,t->left, keyp, removedp);
         else if (t->right != NULL)
-            t->right = aatree_remove_recursive(t->right, key, removedp);
+            t->right = remove_recursive(b, t->right, keyp, removedp);
         else
             return t;           /* A leaf */
     }
     return aatree_post_remove_fix(t);
 }
 
-aatree_t
-aatree_remove_node(aatree_t t, const char *key, aatree_t *nodep)
+aatree_node_t *
+aatree_remove_node(aatree_t *t, void *keyp)
 {
-    aatree_t node = NULL;
+    aatree_node_t *node = NULL;
 
-    t = aatree_remove_recursive(t, key, &node);
-    if (nodep != NULL)
-        *nodep = node;
-    return t;
+    t->root = remove_recursive(t, t->root, keyp, &node);
+    return node;
 }
 
-aatree_t
-aatree_find_key(aatree_t t, const char *key)
+aatree_node_t *
+aatree_find_key(aatree_t *t, void *key)
 {
-    while (t != NULL)
+    aatree_node_t *n = t->root;
+
+    while (n != NULL)
     {
-        int cmp = strcmp(key, t->key);
+        int cmp = t->compare(t, key, n);
 
         if (cmp == 0)
             break;
         if (cmp < 0)
-            t = t->left;
+            n = n->left;
         else
-            t = t->right;
+            n = n->right;
     }
-    return t;
+    return n;
 }
 
-bool
-aatree_each(aatree_t t, bool (*f)(aatree_t))
+static bool
+each(aatree_t *b, aatree_node_t *t, bool (*f)(aatree_t *, aatree_node_t *))
 {
     while (t != NULL)
     {
-        if (! aatree_each(t->left, f))
+        if (! each(b, t->left, f))
             return false;
-        if (! f(t))
+        if (! f(b, t))
             return false;
         t = t->right;
     }
@@ -291,26 +268,34 @@ aatree_each(aatree_t t, bool (*f)(aatree_t))
 }
 
 bool
-aatree_iter_init(aatree_t t, aatree_iter_t *iter)
+aatree_each(aatree_t *t, bool (*f)(aatree_t *, aatree_node_t *))
 {
+    return each(t, t->root, f);
+}
+
+bool
+aatree_iter_init(aatree_t *t, aatree_iter_t *iter)
+{
+    aatree_node_t *n = t->root;
+
     memset(iter, 0, sizeof(aatree_iter_t));
-    while (t != NULL)
+    while (n != NULL)
     {
         if (iter->i >= AATREE_MAX_DEPTH)
             return false;
-        iter->node[iter->i++] = t;
-        t = t->left;
+        iter->node[iter->i++] = n;
+        n = n->left;
     }
     return true;
 }
 
-aatree_t
+aatree_node_t *
 aatree_iter_next(aatree_iter_t *iter)
 {
     if (iter->i == 0)
         return NULL;
-    aatree_t t = iter->node[--iter->i];
-    for (aatree_t tr = t->right ; tr != NULL ; tr = tr->left)
+    aatree_node_t *t = iter->node[--iter->i];
+    for (aatree_node_t *tr = t->right ; tr != NULL ; tr = tr->left)
     {
         if (iter->i >= AATREE_MAX_DEPTH)
             return NULL;
@@ -320,34 +305,37 @@ aatree_iter_next(aatree_iter_t *iter)
 }
 
 bool
-aatree_iter_key_init(aatree_t t, const char *key, aatree_iter_t *iter)
+aatree_iter_key_init(aatree_t *t, void *key, aatree_iter_t *iter)
 {
+    aatree_node_t *n;
+
     memset(iter, 0, sizeof(aatree_iter_t));
-    iter->key = key;
-    t = aatree_find_key(t, key);
-    if (t == NULL)
+    iter->keyp = key;
+    iter->base = t;
+    n = aatree_find_key(t, key);
+    if (n == NULL)
         return false;
-    while (t != NULL)
+    while (n != NULL)
     {
-        if (strcmp(key, t->key) != 0)
+        if (t->compare(t, key, n) != 0)
             break;
         if (iter->i >= AATREE_MAX_DEPTH)
             return false;
-        iter->node[iter->i++] = t;
-        t = t->left;
+        iter->node[iter->i++] = n;
+        n = n->left;
     }
     return true;
 }
 
-aatree_t
+aatree_node_t *
 aatree_iter_key_next(aatree_iter_t *iter)
 {
     if (iter->i == 0)
         return NULL;
-    aatree_t t = iter->node[--iter->i];
-    for (aatree_t tr = t->right ; tr != NULL ; tr = tr->left)
+    aatree_node_t *t = iter->node[--iter->i];
+    for (aatree_node_t *tr = t->right ; tr != NULL ; tr = tr->left)
     {
-        if (strcmp(iter->key, tr->key) != 0)
+        if (iter->base->compare(iter->base, iter->keyp, tr) != 0)
             break;
         if (iter->i >= AATREE_MAX_DEPTH)
             return NULL;

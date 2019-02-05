@@ -7,7 +7,7 @@ tst() {
     shift
     file=$1
     shift
-#    valgrind --leak-check=full ../aatree-test $* > /tmp/$file
+#    valgrind --leak-check=full --show-leak-kinds=all ../aatree-test $* > /tmp/$file
     ../aatree-test $* > /tmp/$file
     cs1=`cksum /tmp/$file | cut -d' ' -f1`
     cs2=`cksum $file | cut -d' ' -f1`
