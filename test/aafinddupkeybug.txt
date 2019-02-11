@@ -1,0 +1,15 @@
+  (1)zip:zap
+(2)x:2
+    (1)x:1
+  (1)foo:bar
+--------------------
+Each: foo:bar x:1 x:2 zip:zap
+--------------------
+Iter: foo:bar x:1 x:2 zip:zap
+--------------------
+Find: x
+  Found 2
+--------------------
+Iter find: x
+  Found 2 1
+--------------------

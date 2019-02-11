@@ -46,6 +46,8 @@ tst "Find a unique key 2" aafinduniquekey2.txt -f d f:6 g:7 a:1 c:3 b:2 d:4 e:5 
 tst "Find no dup. keys" aafinddupkey0.txt -f z f:9 a:1 e:6 c:4 c:3 b:2 c:5 d:7 e:8
 tst "Find a dup. key 1" aafinddupkey1.txt -f c f:9 a:1 e:6 c:4 c:3 b:2 c:5 d:7 e:8
 tst "Find a dup. key 2" aafinddupkey2.txt -f e f:9 a:1 e:6 c:4 c:3 b:2 c:5 d:7 e:8
+# Built a peculiar tree where only the first x node as found
+tst "Find a dup. key bug" aafinddupkeybug.txt -f x x:1 x:2 zip:zap foo:bar
 
 tst "Insert unique in empty" aainsunique0.txt -u 1
 tst "Insert unique in one ok" aainsunique1yes.txt -u 1 2

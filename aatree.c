@@ -307,39 +307,49 @@ aatree_iter_next(aatree_iter_t *iter)
 bool
 aatree_iter_key_init(aatree_t *t, void *key, aatree_iter_t *iter)
 {
-    aatree_node_t *n;
-
     memset(iter, 0, sizeof(aatree_iter_t));
     iter->keyp = key;
     iter->base = t;
-    n = aatree_find_key(t, key);
-    if (n == NULL)
-        return true;            /* Ok, iter_key_next will fail instead */
-    while (n != NULL)
-    {
-        if (t->compare(t, key, n) != 0)
-            break;
-        if (iter->i >= AATREE_MAX_DEPTH)
-            return false;
-        iter->node[iter->i++] = n;
-        n = n->left;
-    }
+    if (t->root != NULL)
+        iter->node[iter->i++] = t->root;
     return true;
 }
 
 aatree_node_t *
 aatree_iter_key_next(aatree_iter_t *iter)
 {
-    if (iter->i == 0)
-        return NULL;
-    aatree_node_t *t = iter->node[--iter->i];
-    for (aatree_node_t *tr = t->right ; tr != NULL ; tr = tr->left)
+    aatree_node_t *t;
+
+    while (iter->i > 0)
     {
-        if (iter->base->compare(iter->base, iter->keyp, tr) != 0)
+        t = iter->node[--iter->i];
+        while (t != NULL)
+        {
+            int cmp = iter->base->compare(iter->base, iter->keyp, t);
+
+            if (cmp == 0)
+                break;
+            if (cmp < 0)
+                t = t->left;
+            else
+                t = t->right;
+        }
+        if (t != NULL)
             break;
+    }
+    if (t == NULL)
+        return NULL;
+    if (t->right != NULL)
+    {
         if (iter->i >= AATREE_MAX_DEPTH)
             return NULL;
-        iter->node[iter->i++] = tr;
+        iter->node[iter->i++] = t->right;
+    }
+    if (t->left != NULL)
+    {
+        if (iter->i >= AATREE_MAX_DEPTH)
+            return NULL;
+        iter->node[iter->i++] = t->left;
     }
     return t;
 }
