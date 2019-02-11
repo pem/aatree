@@ -314,7 +314,7 @@ aatree_iter_key_init(aatree_t *t, void *key, aatree_iter_t *iter)
     iter->base = t;
     n = aatree_find_key(t, key);
     if (n == NULL)
-        return false;
+        return true;            /* Ok, iter_key_next will fail instead */
     while (n != NULL)
     {
         if (t->compare(t, key, n) != 0)

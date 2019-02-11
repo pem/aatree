@@ -297,17 +297,25 @@ main(int argc, char **argv)
         printf("--------------------\n");
         printf("Iter find: %s\n", findkey);
         if (! aatree_iter_key_init(root, findkey, &iter))
-            printf("  Iter not found\n");
+            fprintf(stderr, "Tree is too deep for iterator\n");
         else
         {
-            printf("  Found");
+            bool pfound = true;
+
             while ((n = aatree_iter_key_next(&iter)) != NULL)
             {
                 char *val = aatree_value(n);
 
+                if (pfound)
+                {
+                    printf("  Found");
+                    pfound = false;
+                }
                 printf(" %s", (val == NULL ? "(null)" : val));
             }
-            printf("\n");
+            if (pfound)
+                printf("  Iter not found");
+            putchar('\n');
         }
         printf("--------------------\n");
     }
