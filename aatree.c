@@ -318,7 +318,7 @@ aatree_iter_key_init(aatree_t *t, void *key, aatree_iter_t *iter)
 aatree_node_t *
 aatree_iter_key_next(aatree_iter_t *iter)
 {
-    aatree_node_t *t;
+    aatree_node_t *t = NULL;
 
     while (iter->i > 0)
     {
