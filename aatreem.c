@@ -177,11 +177,14 @@ aatreem_swap(aatree_t *t, aatree_node_t *a, aatree_node_t *b)
 }
 
 aatree_t *
-aatreem_create(void)
+aatreem_create(size_t size)
 {
-    aatree_t *t = malloc(sizeof(aatree_t));
+    aatree_t *t;
 
-    t->root = NULL;
+    if (size < sizeof(aatree_t))
+        size = sizeof(aatree_t);
+    t = malloc(size);
+    memset(t, 0, size);
     t->compare = aatreem_compare;
     t->swap = aatreem_swap;
     return t;

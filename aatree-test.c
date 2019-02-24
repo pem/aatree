@@ -12,6 +12,12 @@
 
 #define UNUSED(x) ((void)(x))
 
+typedef struct taatree_s
+{
+    aatree_t base;              /* Must be first */
+    char *condval;
+} taatree_t;
+
 static void
 ptree(aatree_node_t *n, int indent)
 {
@@ -62,15 +68,13 @@ abortminus(aatree_t *t, aatree_node_t *n)
     return true;
 }
 
-static char *CondValue = NULL;
-
 static bool
-condval(aatree_t *t, aatree_node_t *n)
+condval_check(aatree_t *t, aatree_node_t *n)
 {
-    UNUSED(t);
+    taatree_t *root = (taatree_t *)t;
     char *val = aatree_value(n);
 
-    return (strcmp(val, CondValue) == 0);
+    return (strcmp(val, root->condval) == 0);
 }
 
 /* Check invariants for AA Trees */
@@ -131,7 +135,7 @@ cnode(aatree_t *t, aatree_node_t *n)
 static void
 usage(void)
 {
-    fprintf(stderr, "aatree-test [-r|-u|-R old/new] [-v] [-d <key> [-C <condval>]] [-f <key>] keys...\n");
+    fprintf(stderr, "aatree-test [-r|-u|-R old/new] [-v] [-d <key>[:<val>]] [-f <key>[:<val>]] keys...\n");
     exit(1);
 }
 
@@ -142,28 +146,23 @@ main(int argc, char **argv)
     char *delkey, *findkey, *oldkey = NULL, *newkey = NULL;
     bool verbose = false, delete = false, find = false, unique = false,
         replace = false, rename = false;
-    aatree_t *root = NULL;
-    aatree_condition_fun_t *cond = NULL;
+    taatree_t *root = NULL;
 
     opterr = 0;
     while ((c = getopt(argc, argv, "C:R:d:f:ruv")) != EOF)
         switch (c)
         {
-        case 'C':
-            CondValue = optarg;
-            cond = condval;
-            break;
         case 'R':
             rename = true;
             oldkey = optarg;
             break;
         case 'd':
             delete = true;
-            delkey = optarg;
+            delkey = strdup(optarg);
             break;
         case 'f':
             find = true;
-            findkey = optarg;
+            findkey = strdup(optarg);
             break;
         case 'r':
             replace = true;
@@ -177,11 +176,10 @@ main(int argc, char **argv)
         default:
             usage();
         }
-    if ((replace && unique) || (replace && rename) || (unique && rename) ||
-        (CondValue != NULL && !delete))
+    if ((replace && unique) || (replace && rename) || (unique && rename))
         usage();
 
-    root = aatreem_create();
+    root = (taatree_t *)aatreem_create(sizeof(taatree_t));
 
     if (rename)
     {
@@ -210,12 +208,12 @@ main(int argc, char **argv)
             val = strdup(val);
         }
         if (!replace && !unique)
-            aatreem_insert(root, key, val);
+            aatreem_insert(&root->base, key, val);
         else if (replace)
         {
             void *oldval = NULL;
 
-            aatreem_replace(root, key, val, &oldval);
+            aatreem_replace(&root->base, key, val, &oldval);
             if (oldval != NULL)
             {
                 printf("Replaced %s, old value is %s\n",
@@ -227,7 +225,7 @@ main(int argc, char **argv)
         {
             void *xists = NULL;
 
-            if (! aatreem_insert_unique(root, key, val, &xists))
+            if (! aatreem_insert_unique(&root->base, key, val, &xists))
             {
                 printf("Key is not unique:");
                 printf(" %s", key);
@@ -240,15 +238,15 @@ main(int argc, char **argv)
         free(key);
         if (verbose)
         {
-            ptree(root->root, 0);
+            ptree(root->base.root, 0);
             printf("--------------------\n");
         }
-        if (! aatree_each(root, cnode))
+        if (! aatree_each(&root->base, cnode))
             printf("aatree_each cnode returned false\n");
     }
     if (! verbose)
     {
-        ptree(root->root, 0);
+        ptree(root->base.root, 0);
         printf("--------------------\n");
     }
     for (int i = optind ; i < argc ; i++)
@@ -259,24 +257,24 @@ main(int argc, char **argv)
 
         if (val != NULL)
             *val++ = '\0';
-        n = aatree_find_key(root, key);
+        n = aatree_find_key(&root->base, key, NULL);
         if (n == NULL)
             printf("Didn't find %s\n", argv[i]);
         free(key);
     }
     printf("Each:");
-    if (! aatree_each(root, pnode))
+    if (! aatree_each(&root->base, pnode))
         printf("aatree_each pnode returned false\n");
     printf("\n--------------------\n");
     printf("Iter:");
     {
         aatree_iter_t iter;
         aatree_node_t *n;
-        if (! aatree_iter_init(root, &iter))
+        if (! aatree_iter_init(&root->base, &iter))
             fprintf(stderr, "Tree is too deep for iterator\n");
         else
             while ((n = aatree_iter_next(&iter)) != NULL)
-                (void)pnode(root, n);
+                (void)pnode(&root->base, n);
     }
     printf("\n--------------------\n");
 
@@ -284,9 +282,17 @@ main(int argc, char **argv)
     {
         aatree_node_t *n;
         aatree_iter_t iter;
+        char *condval;
+        aatree_condition_fun_t *cond = NULL;
 
         printf("Find: %s\n", findkey);
-        if ((n = aatree_find_key(root, findkey)) == NULL)
+        if ((condval = strchr(findkey, ':')) != NULL)
+        {
+            *condval++ = '\0';
+            root->condval = condval;
+            cond = condval_check;
+        }
+        if ((n = aatree_find_key(&root->base, findkey, cond)) == NULL)
             printf("  Not found\n");
         else
         {
@@ -296,7 +302,7 @@ main(int argc, char **argv)
         }
         printf("--------------------\n");
         printf("Iter find: %s\n", findkey);
-        if (! aatree_iter_key_init(root, findkey, &iter))
+        if (! aatree_iter_key_init(&root->base, findkey, &iter))
             fprintf(stderr, "Tree is too deep for iterator\n");
         else
         {
@@ -318,47 +324,57 @@ main(int argc, char **argv)
             putchar('\n');
         }
         printf("--------------------\n");
+        free(findkey);
     }
     if (delete)
     {
         char *delval = NULL;
+        char *condval;
+        aatree_condition_fun_t *cond = NULL;
 
         printf("Deleting: %s\n", delkey);
-        if (! aatreem_delete(root, delkey, cond, (void *)&delval))
+        if ((condval = strchr(delkey, ':')) != NULL)
+        {
+            *condval++ = '\0';
+            root->condval = condval;
+            cond = condval_check;
+        }
+        if (! aatreem_delete(&root->base, delkey, cond, (void *)&delval))
             printf("  Not deleted\n");
         else
         {
             free(delval);
             printf("  Deleted\n");
         }
-        if (! aatree_each(root, cnode))
+        if (! aatree_each(&root->base, cnode))
             printf("aatree_each cnode returned false\n");
-        ptree(root->root, 0);
+        ptree(root->base.root, 0);
         printf("--------------------\n");
         printf("Order:");
-        if (! aatree_each(root, pnode))
+        if (! aatree_each(&root->base, pnode))
             printf("aatree_each pnode returned false\n");
         printf("\n--------------------\n");
+        free(delkey);
     }
     if (rename)
     {
         printf("Renaming: %s -> %s\n", oldkey, newkey);
-        aatreem_rename(root, oldkey, newkey);
-        if (! aatree_each(root, cnode))
+        aatreem_rename(&root->base, oldkey, newkey);
+        if (! aatree_each(&root->base, cnode))
             printf("aatree_each cnode returned false\n");
-        ptree(root->root, 0);
+        ptree(root->base.root, 0);
         printf("--------------------\n");
         printf("Order:");
-        if (! aatree_each(root, pnode))
+        if (! aatree_each(&root->base, pnode))
             printf("aatree_each pnode returned false\n");
         printf("\n--------------------\n");
         free(oldkey);
     }
 
-    if (! aatree_each(root, abortminus))
+    if (! aatree_each(&root->base, abortminus))
         printf("Aborted on minus\n");
 
-    aatreem_destroy(root, free);
+    aatreem_destroy(&root->base, free);
 
     exit(0);
 }

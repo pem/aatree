@@ -74,12 +74,12 @@ tst "Abort at 0" aaabrta0.txt a:-1 b:2 c:-3 d:4 e:-5
 tst "Abort at 2" aaabrta2.txt a:1 b:2 c:-3 d:4 e:-5
 tst "Abort at 4" aaabrta4.txt a:1 b:2 c:3 d:4 e:-5
 
-tst "No conditional delete in empty" aacondel0.txt -d b -C 3
-tst "No conditional delete in one" aacondel1no.txt -d b -C 3 b:2
-tst "Conditional delete in one" aacondel1yes.txt -d b -C 2 b:2
-tst "No conditional delete in 6" aacondel6no.txt -d b -C 7 a:1 b:2 c:3 b:4 d:5 b:6
-tst "Conditional delete one in 6" aacondel6one.txt -d b -C 4 a:1 b:2 c:3 b:4 d:5 b:6
-tst "Conditional delete two in 6" aacondel6two.txt -d b -C 6 a:1 b:2 c:3 b:4 d:5 b:6
+tst "No conditional delete in empty" aacondel0.txt -d b:3
+tst "No conditional delete in one" aacondel1no.txt -d b:3 b:2
+tst "Conditional delete in one" aacondel1yes.txt -d b:2 b:2
+tst "No conditional delete in 6" aacondel6no.txt -d b:7 a:1 b:2 c:3 b:4 d:5 b:6
+tst "Conditional delete one in 6" aacondel6one.txt -d b:4 a:1 b:2 c:3 b:4 d:5 b:6
+tst "Conditional delete two in 6" aacondel6two.txt -d b:6 a:1 b:2 c:3 b:4 d:5 b:6
 
 echo
 if [ $xit -ne 0 ]; then

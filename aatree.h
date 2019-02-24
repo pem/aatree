@@ -72,10 +72,12 @@ aatree_node_t *aatree_replace_node(aatree_t *t,
 aatree_node_t *aatree_remove_node(aatree_t *t, void *keyp,
                                   aatree_condition_fun_t *cond);
 
-/* Find a node matching 'key'. The comparison is done with strcmp().
+/* Find a node matching 'key'. If a 'cond' is provided, this is called
+   and must return true for it to be a match.
    It will return the first matching node it encounters in the tree.
    Returns the found node, or NULL. */
-aatree_node_t *aatree_find_key(aatree_t *t, void *keyp);
+aatree_node_t *aatree_find_key(aatree_t *t, void *keyp,
+                               aatree_condition_fun_t *cond);
 
 /* Call f for each node inte the tree.
    If f returns false for any node, it will abort the iteration

@@ -9,7 +9,9 @@
 
 #include "aatree.h"
 
-aatree_t *aatreem_create(void);
+/* Size is necessary in case we have expanded the struct; at
+   least sizeof(aatree_t) will be allocated regardless of 'size'. */
+aatree_t *aatreem_create(size_t);
 
 char *aatree_key(aatree_node_t *t);
 

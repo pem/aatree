@@ -9,7 +9,7 @@ Each: a:1 b:2 b:4 b:6 c:3 d:5
 --------------------
 Iter: a:1 b:2 b:4 b:6 c:3 d:5
 --------------------
-Deleting: b
+Deleting: b:7
   Not deleted
     (1)d:5
   (2)c:3

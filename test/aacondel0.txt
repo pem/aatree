@@ -3,7 +3,7 @@ Each:
 --------------------
 Iter:
 --------------------
-Deleting: b
+Deleting: b:3
   Not deleted
 --------------------
 Order:

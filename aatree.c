@@ -235,7 +235,8 @@ aatree_remove_node(aatree_t *t, void *keyp, aatree_condition_fun_t *cond)
 }
 
 aatree_node_t *
-aatree_find_key(aatree_t *t, void *key)
+aatree_find_key(aatree_t *t, void *key,
+                aatree_condition_fun_t *cond)
 {
     aatree_node_t *n = t->root;
 
@@ -243,7 +244,7 @@ aatree_find_key(aatree_t *t, void *key)
     {
         int cmp = t->compare(t, key, n);
 
-        if (cmp == 0)
+        if (cmp == 0 && (cond == NULL || cond(t, n)))
             break;
         if (cmp < 0)
             n = n->left;
