@@ -1,28 +1,55 @@
 #!/bin/sh
 
-xit=0
+generate=false
 
-tst() {
-    name=$1
-    file=`name2file "$name"`
-    shift
-#    valgrind --leak-check=full --show-leak-kinds=all ../aatree-test $* > /tmp/$file
-    ../aatree-test $* > /tmp/$file
-    cs1=`cksum /tmp/$file | cut -d' ' -f1`
-    cs2=`cksum $file | cut -d' ' -f1`
-    if [ $cs1 != $cs2 ]; then
-	xit=1
-	echo "$name FAIL" >&2
-    else
-	echo "$name OK"
-    fi
-}
+xit=0
 
 name2file() {
     name=$1
     newname=`echo "aatree-$1" | tr -s ' ,.' '-'`
     echo "$newname.txt"
 }
+
+tst() {
+    name=$1
+    file=`name2file "$name"`
+    shift
+    if $generate ; then
+	echo "Writing $file"
+	../aatree-test $* > ./$file
+    else
+#        valgrind --leak-check=full --show-leak-kinds=all ../aatree-test $* > /tmp/$file
+	../aatree-test $* > /tmp/$file
+	cs1=`cksum /tmp/$file | cut -d' ' -f1`
+	cs2=`cksum $file | cut -d' ' -f1`
+	if [ "$cs1" != "$cs2" ]; then
+	    xit=1
+	    echo "$name FAIL" >&2
+	else
+	    echo "$name OK"
+	fi
+	rm /tmp/$file
+    fi
+}
+
+if [ $# -gt 0 ]; then
+    if [ $# -eq 1 -a "$1" = '-g' ]; then
+	echo 'Generating new result files'
+	echo 'This will overwrite existing files in this directory\!'
+	echo 'Continue? [y/N]'
+	read yesorno
+	echo $yesorno | egrep -i '(y|yes)' > /dev/null 2>&1
+	if [ $? -eq  0 ]; then
+	    generate=true
+	else
+	    echo 'Aborted' >&2
+	    exit 1
+	fi
+    else
+	echo 'Usage: aatree-test.sh [-g]' >&2
+	exit 1
+    fi
+fi
 
 tst Empty
 tst 'aaaaaa' -v a:1 a:2 a:3 a:4 a:5 a:6
@@ -79,16 +106,16 @@ tst "Abort at 0" a:-1 b:2 c:-3 d:4 e:-5
 tst "Abort at 2" a:1 b:2 c:-3 d:4 e:-5
 tst "Abort at 4" a:1 b:2 c:3 d:4 e:-5
 
-#tst "Find none conditionally in empty" -f a:3
-#tst "Find one conditionally in one" -f a:1 a:1
-#tst "Find none conditionally in 7" -f a:9 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 1 conditionally in 7" -f a:1 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 2 conditionally in 7" -f a:2 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 3 conditionally in 7" -f a:3 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 4 conditionally in 7" -f a:4 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 5 conditionally in 7" -f a:5 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 6 conditionally in 7" -f a:6 a:1 a:2 a:3 a:4 a:5 a:6 a:7
-#tst "Find 7 conditionally in 7" -f a:7 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find none conditionally in empty" -f a:3
+tst "Find one conditionally in one" -f a:1 a:1
+tst "Find none conditionally in 7" -f a:9 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 1 conditionally in 7" -f a:1 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 2 conditionally in 7" -f a:2 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 3 conditionally in 7" -f a:3 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 4 conditionally in 7" -f a:4 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 5 conditionally in 7" -f a:5 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 6 conditionally in 7" -f a:6 a:1 a:2 a:3 a:4 a:5 a:6 a:7
+tst "Find 7 conditionally in 7" -f a:7 a:1 a:2 a:3 a:4 a:5 a:6 a:7
 
 tst "No conditional delete in empty" -d b:3
 tst "No conditional delete in one" -d b:3 b:2

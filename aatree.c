@@ -234,24 +234,38 @@ aatree_remove_node(aatree_t *t, void *keyp, aatree_condition_fun_t *cond)
     return node;
 }
 
-aatree_node_t *
-aatree_find_key(aatree_t *t, void *key,
-                aatree_condition_fun_t *cond)
+/* Only actually called recursively if we have a cond that returns false */
+static aatree_node_t *
+aatree_find_key_recursive(aatree_t *t, aatree_node_t *n, void *key,
+                          aatree_condition_fun_t *cond)
 {
-    aatree_node_t *n = t->root;
-
     while (n != NULL)
     {
         int cmp = t->compare(t, key, n);
 
         if (cmp == 0 && (cond == NULL || cond(t, n)))
             break;
+        /* cmp != 0 || (cond != NULL && !cond(t, n)) */
         if (cmp < 0)
             n = n->left;
-        else
+        else if (cmp > 0)
             n = n->right;
+        else
+        {  /* cmp == 0 but cond said no */
+            aatree_node_t *ln = aatree_find_key_recursive(t, n->left, key, cond);
+            if (ln != NULL)
+                return ln;
+            n = n->right;
+        }
     }
     return n;
+}
+
+aatree_node_t *
+aatree_find_key(aatree_t *t, void *key,
+                aatree_condition_fun_t *cond)
+{
+    return aatree_find_key_recursive(t, t->root, key, cond);
 }
 
 static bool
@@ -353,4 +367,20 @@ aatree_iter_key_next(aatree_iter_t *iter)
         iter->node[iter->i++] = t->left;
     }
     return t;
+}
+
+static uint64_t
+height(aatree_node_t *n)
+{
+    if (n == 0)
+        return 0;
+    uint64_t ld = 1 + height(n->left);
+    uint64_t rd = 1 + height(n->right);
+    return (ld > rd ? ld : rd);
+}
+
+uint64_t
+aatree_height(aatree_t *t)
+{
+    return height(t->root);
 }

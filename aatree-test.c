@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "aatreem.h"
 
@@ -135,7 +136,7 @@ cnode(aatree_t *t, aatree_node_t *n)
 static void
 usage(void)
 {
-    fprintf(stderr, "aatree-test [-r|-u|-R old/new] [-v] [-d <key>[:<val>]] [-f <key>[:<val>]] keys...\n");
+    fprintf(stderr, "aatree-test [-D|-r|-u|-R old/new] [-v] [-d <key>[:<val>]] [-f <key>[:<val>]] keys...\n");
     exit(1);
 }
 
@@ -145,13 +146,17 @@ main(int argc, char **argv)
     int c;
     char *delkey, *findkey, *oldkey = NULL, *newkey = NULL;
     bool verbose = false, delete = false, find = false, unique = false,
-        replace = false, rename = false;
+        replace = false, rename = false, height = false;
+    uint32_t count = 0;
     taatree_t *root = NULL;
 
     opterr = 0;
-    while ((c = getopt(argc, argv, "C:R:d:f:ruv")) != EOF)
+    while ((c = getopt(argc, argv, "HR:d:f:ruv")) != EOF)
         switch (c)
         {
+        case 'H':
+            height = true;
+            break;
         case 'R':
             rename = true;
             oldkey = optarg;
@@ -208,13 +213,18 @@ main(int argc, char **argv)
             val = strdup(val);
         }
         if (!replace && !unique)
+        {
             aatreem_insert(&root->base, key, val);
+            count += 1;
+        }
         else if (replace)
         {
             void *oldval = NULL;
 
             aatreem_replace(&root->base, key, val, &oldval);
-            if (oldval != NULL)
+            if (oldval == NULL)
+                count += 1;
+            else
             {
                 printf("Replaced %s, old value is %s\n",
                        key, (oldval != NULL ? (char *)oldval : "(null)"));
@@ -234,6 +244,7 @@ main(int argc, char **argv)
                 putchar('\n');
                 free(val);
             }
+            count += 1;
         }
         free(key);
         if (verbose)
@@ -247,6 +258,13 @@ main(int argc, char **argv)
     if (! verbose)
     {
         ptree(root->base.root, 0);
+        printf("--------------------\n");
+    }
+    if (height)
+    {
+        printf("Count: %lu (log2: %g)\n",
+               (unsigned long)count, (count == 0 ? 0 : ceil(log2(count+1))));
+        printf("Height: %lu\n", (unsigned long)aatree_height(&root->base));
         printf("--------------------\n");
     }
     for (int i = optind ; i < argc ; i++)
@@ -301,7 +319,10 @@ main(int argc, char **argv)
             printf("  Found %s\n", (val == NULL ? "(null)" : val));
         }
         printf("--------------------\n");
-        printf("Iter find: %s\n", findkey);
+        if (condval == NULL)
+            printf("Iter find: %s\n", findkey);
+        else
+            printf("Iter find: %s:%s\n", findkey, condval);
         if (! aatree_iter_key_init(&root->base, findkey, &iter))
             fprintf(stderr, "Tree is too deep for iterator\n");
         else
@@ -312,6 +333,9 @@ main(int argc, char **argv)
             {
                 char *val = aatree_value(n);
 
+                if (condval != NULL &&
+                    strcmp(val, condval) != 0)
+                    continue;
                 if (pfound)
                 {
                     printf("  Found");

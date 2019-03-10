@@ -97,3 +97,6 @@ bool aatree_iter_key_init(aatree_t *t, void *keyp, aatree_iter_t *iter);
 /* Get the next matching node from the iterator.
    Returns NULL when there is no more, or the tree is too deep. */
 aatree_node_t *aatree_iter_key_next(aatree_iter_t *iter);
+
+/* Returns the height of the tree. */
+uint64_t aatree_height(aatree_t *t);
