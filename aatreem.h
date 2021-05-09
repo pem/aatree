@@ -1,5 +1,5 @@
 /*
-** Per-Erik Martin (pem@pem.nu) 2019-01-27
+** pem 2019-01-27
 **
 ** Implicit malloc/free functions with a string key and void* value.
 **

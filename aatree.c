@@ -1,5 +1,5 @@
 /*
-** Per-Erik Martin (pem@pem.nu) 2018-10-15
+** pem 2018-10-15
 **
 ** See "Balanced Search Trees Made Simple" by Arne Andersson,
 ** http://user.it.uu.se/~arnea/ps/simp.pdf .

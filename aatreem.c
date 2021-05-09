@@ -1,5 +1,5 @@
 /*
-** Per-Erik Martin (pem@pem.nu) 2018-10-22
+** pem 2018-10-22
 **
 ** Additional functions that implicitly use malloc/free for keys and nodes.
 **
